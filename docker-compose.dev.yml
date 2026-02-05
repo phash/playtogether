@@ -1,0 +1,51 @@
+# PlayTogether - Development Docker Compose
+# Usage: docker compose -f docker-compose.dev.yml up
+#
+# This configuration mounts source code for hot-reload during development
+
+services:
+  # ===========================================
+  # Backend Server (Development with hot-reload)
+  # ===========================================
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile.dev
+    container_name: playtogether-server-dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - CLIENT_URL=http://localhost:5173
+    volumes:
+      - ./packages/server/src:/app/packages/server/src:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+    networks:
+      - playtogether-dev-network
+
+  # ===========================================
+  # Frontend Client (Vite dev server)
+  # ===========================================
+  client:
+    build:
+      context: .
+      dockerfile: packages/client/Dockerfile.dev
+    container_name: playtogether-client-dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_SERVER_URL=http://localhost:3001
+    volumes:
+      - ./packages/client/src:/app/packages/client/src:ro
+      - ./packages/client/public:/app/packages/client/public:ro
+      - ./packages/client/index.html:/app/packages/client/index.html:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+    depends_on:
+      - server
+    networks:
+      - playtogether-dev-network
+
+networks:
+  playtogether-dev-network:
+    driver: bridge

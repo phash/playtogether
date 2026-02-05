@@ -1,0 +1,32 @@
+# PlayTogether Server - Development Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for building native modules
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package.json ./
+COPY packages/server/package.json ./packages/server/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install all dependencies (including devDependencies)
+RUN npm install
+
+# Copy tsconfig files
+COPY tsconfig.base.json ./
+COPY packages/server/tsconfig.json ./packages/server/
+COPY packages/shared/tsconfig.json ./packages/shared/
+
+# Copy source files
+COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server
+
+# Build shared package
+RUN npm run build --workspace=@playtogether/shared
+
+EXPOSE 3001
+
+# Use tsx for hot-reload development
+CMD ["npx", "tsx", "watch", "packages/server/src/index.ts"]

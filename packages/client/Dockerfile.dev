@@ -1,0 +1,30 @@
+# PlayTogether Client - Development Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json ./
+COPY packages/client/package.json ./packages/client/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install all dependencies
+RUN npm install
+
+# Copy tsconfig files
+COPY tsconfig.base.json ./
+COPY packages/client/tsconfig.json ./packages/client/
+COPY packages/client/tsconfig.node.json ./packages/client/
+COPY packages/shared/tsconfig.json ./packages/shared/
+
+# Copy source files
+COPY packages/shared ./packages/shared
+COPY packages/client ./packages/client
+
+# Build shared package
+RUN npm run build --workspace=@playtogether/shared
+
+EXPOSE 5173
+
+# Run Vite dev server with host binding for Docker
+CMD ["npm", "run", "dev", "--workspace=@playtogether/client", "--", "--host", "0.0.0.0"]
