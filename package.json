@@ -16,6 +16,9 @@
     "build:server": "npm -w @playtogether/server run build",
     "build:client": "npm -w @playtogether/client run build",
     "start": "npm -w @playtogether/server run start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -26,7 +29,8 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18.0.0"

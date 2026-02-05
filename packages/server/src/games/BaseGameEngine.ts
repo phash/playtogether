@@ -38,7 +38,7 @@ export abstract class BaseGameEngine {
     this.onEvent = onEvent;
 
     // Scores initialisieren
-    for (const playerId of playerIds) {
+    for (const playerId of this.playerIds) {
       this.scores.set(playerId, 0);
     }
   }
