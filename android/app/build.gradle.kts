@@ -14,8 +14,8 @@ android {
         applicationId = "com.playtogether"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -38,7 +38,7 @@ android {
         debug {
             isMinifyEnabled = false
             // Lokales Netzwerk - IP anpassen falls nötig
-            buildConfigField("String", "SERVER_URL", "\"http://192.168.178.20:3002\"")
+            buildConfigField("String", "SERVER_URL", "\"http://192.168.178.20:3003\"")
         }
     }
 

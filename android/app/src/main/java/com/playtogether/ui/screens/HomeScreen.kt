@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.playtogether.BuildConfig
 import com.playtogether.data.model.GameType
 import com.playtogether.data.repository.GameRepository
 import com.playtogether.ui.theme.*
@@ -192,6 +193,25 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Beitreten")
                 }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Version Info
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Text(
+                    text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+                Text(
+                    text = BuildConfig.SERVER_URL,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary.copy(alpha = 0.6f)
+                )
             }
         }
 

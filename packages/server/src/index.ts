@@ -9,6 +9,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -117,6 +119,175 @@ app.get('/api/room/:code', (req, res) => {
     maxPlayers: room.maxPlayers,
     status: room.status,
   });
+});
+
+// APK Info endpoint
+app.get('/api/apk-info', (_req, res) => {
+  const apkPath = path.join(__dirname, '../public/downloads/playtogether.apk');
+
+  if (!fs.existsSync(apkPath)) {
+    res.status(404).json({ error: 'APK nicht gefunden' });
+    return;
+  }
+
+  const stats = fs.statSync(apkPath);
+  const fileBuffer = fs.readFileSync(apkPath);
+  const md5Hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
+  const sha256Hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+  res.json({
+    version: '1.0.1',
+    versionCode: 2,
+    filename: 'playtogether.apk',
+    size: stats.size,
+    sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+    modified: stats.mtime.toISOString(),
+    md5: md5Hash,
+    sha256: sha256Hash,
+    serverUrl: 'http://192.168.178.20:3003',
+  });
+});
+
+// Download page
+app.get('/download', (_req, res) => {
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlayTogether - Android App Download</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e4e4e4;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h1 { text-align: center; margin-bottom: 10px; font-size: 28px; }
+    .emoji { font-size: 48px; text-align: center; display: block; margin-bottom: 20px; }
+    .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+    .info-box {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .label { color: #888; }
+    .value { font-family: monospace; word-break: break-all; text-align: right; max-width: 60%; }
+    .hash { font-size: 11px; }
+    .download-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #4CAF50;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    .download-btn:hover { background: #45a049; }
+    .loading { text-align: center; padding: 40px; }
+    .error { color: #ff6b6b; text-align: center; padding: 20px; }
+    .refresh-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #888;
+      border: 1px solid #888;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .refresh-btn:hover { background: rgba(255,255,255,0.1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="emoji">🎮</span>
+    <h1>PlayTogether</h1>
+    <p class="subtitle">Android App Download</p>
+
+    <div id="content">
+      <div class="loading">Lade Informationen...</div>
+    </div>
+  </div>
+
+  <script>
+    async function loadInfo() {
+      try {
+        const res = await fetch('/api/apk-info?t=' + Date.now());
+        if (!res.ok) throw new Error('APK nicht gefunden');
+        const info = await res.json();
+
+        document.getElementById('content').innerHTML = \`
+          <div class="info-box">
+            <div class="info-row">
+              <span class="label">Version</span>
+              <span class="value">\${info.version} (\${info.versionCode})</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Größe</span>
+              <span class="value">\${info.sizeFormatted}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Geändert</span>
+              <span class="value">\${new Date(info.modified).toLocaleString('de-DE')}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Server URL</span>
+              <span class="value">\${info.serverUrl}</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-row">
+              <span class="label">MD5</span>
+              <span class="value hash">\${info.md5}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">SHA256</span>
+              <span class="value hash">\${info.sha256}</span>
+            </div>
+          </div>
+
+          <a href="/download/downloads/playtogether.apk?t=\${Date.now()}" class="download-btn">
+            ⬇️ APK Herunterladen
+          </a>
+          <button class="refresh-btn" onclick="location.reload()">🔄 Aktualisieren</button>
+        \`;
+      } catch (e) {
+        document.getElementById('content').innerHTML = \`
+          <div class="error">Fehler: \${e.message}</div>
+          <button class="refresh-btn" onclick="location.reload()">🔄 Erneut versuchen</button>
+        \`;
+      }
+    }
+    loadInfo();
+  </script>
+</body>
+</html>`;
+  res.send(html);
 });
 
 // ===========================================
