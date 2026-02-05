@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PlayTogether</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">PlayTogether</string>
+    <string name="home_subtitle">Spiele gemeinsam mit Freunden</string>
+    <string name="btn_create_room">Raum erstellen</string>
+    <string name="btn_join_room">Raum beitreten</string>
+
+    <!-- Create/Join -->
+    <string name="label_player_name">Dein Name</string>
+    <string name="label_room_code">Raum-Code</string>
+    <string name="hint_enter_name">Name eingeben…</string>
+    <string name="hint_enter_code">4-stelliger Code</string>
+
+    <!-- Lobby -->
+    <string name="lobby_waiting">Warte auf Spieler…</string>
+    <string name="lobby_players">Spieler</string>
+    <string name="btn_start_game">Spiel starten</string>
+    <string name="btn_leave_room">Raum verlassen</string>
+    <string name="btn_ready">Bereit</string>
+
+    <!-- Game Types -->
+    <string name="game_quiz">Quiz</string>
+    <string name="game_wouldyourather">Würdest du eher?</string>
+    <string name="game_mostlikely">Wer würde am ehesten?</string>
+    <string name="game_eitheror">Entweder/Oder</string>
+    <string name="game_wordchain">Wortkette</string>
+    <string name="game_anagram">Anagramme</string>
+
+    <!-- Moody -->
+    <string name="moody_angry">Wütend</string>
+    <string name="moody_sad">Traurig</string>
+    <string name="moody_meh">Meh</string>
+    <string name="moody_neutral">Neutral</string>
+    <string name="moody_content">Zufrieden</string>
+    <string name="moody_happy">Glücklich</string>
+    <string name="moody_ecstatic">Begeistert</string>
+
+    <!-- Errors -->
+    <string name="error_connection">Verbindungsfehler</string>
+    <string name="error_room_not_found">Raum nicht gefunden</string>
+    <string name="error_room_full">Raum ist voll</string>
+    <string name="error_generic">Ein Fehler ist aufgetreten</string>
+
+    <!-- General -->
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Abbrechen</string>
+    <string name="btn_retry">Erneut versuchen</string>
+    <string name="loading">Laden…</string>
+</resources>
