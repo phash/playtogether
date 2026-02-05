@@ -5,6 +5,7 @@
 import type { RoomState, RoomSettings } from './room.js';
 import type { PlayerState } from './player.js';
 import type { GameType, GameState, QuizAnswer } from './game.js';
+import type { MoodLevel, ReactionType, EquippedCosmetics, MoodyReaction } from './moody.js';
 
 // === Client -> Server Nachrichten ===
 
@@ -15,7 +16,9 @@ export type ClientMessage =
   | SetReadyMessage
   | StartGameMessage
   | GameActionMessage
-  | UpdateSettingsMessage;
+  | UpdateSettingsMessage
+  | MoodyUpdateMessage
+  | MoodyReactionMessage;
 
 export interface CreateRoomMessage {
   type: 'create_room';
@@ -62,6 +65,23 @@ export interface UpdateSettingsMessage {
   payload: Partial<RoomSettings>;
 }
 
+// Moody-Nachrichten vom Client
+export interface MoodyUpdateMessage {
+  type: 'moody_update';
+  payload: {
+    mood: MoodLevel;
+    cosmetics: EquippedCosmetics;
+  };
+}
+
+export interface MoodyReactionMessage {
+  type: 'moody_reaction';
+  payload: {
+    reactionType: ReactionType;
+    toPlayerId?: string;
+  };
+}
+
 // === Server -> Client Nachrichten ===
 
 export type ServerMessage =
@@ -74,7 +94,9 @@ export type ServerMessage =
   | GameStartingMessage
   | GameStateMessage
   | GameEndedMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | MoodyUpdatedMessage
+  | MoodyReactionReceivedMessage;
 
 export interface RoomCreatedMessage {
   type: 'room_created';
@@ -148,6 +170,23 @@ export interface ErrorMessage {
   payload: {
     code: string;
     message: string;
+  };
+}
+
+// Moody-Nachrichten vom Server
+export interface MoodyUpdatedMessage {
+  type: 'moody_updated';
+  payload: {
+    playerId: string;
+    mood: MoodLevel;
+    cosmetics: EquippedCosmetics;
+  };
+}
+
+export interface MoodyReactionReceivedMessage {
+  type: 'moody_reaction_received';
+  payload: {
+    reaction: MoodyReaction;
   };
 }
 

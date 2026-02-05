@@ -1,0 +1,233 @@
+/* MoodyAvatar Styles */
+
+.moody-avatar-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.moody-avatar {
+  position: relative;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--primary);
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+  overflow: hidden;
+}
+
+.moody-avatar.clickable {
+  cursor: pointer;
+}
+
+.moody-avatar.clickable:hover {
+  transform: scale(1.05);
+}
+
+.moody-avatar.clickable:active {
+  transform: scale(0.95);
+}
+
+.moody-emoji {
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Mood Animationen */
+.moody-avatar.bounce {
+  animation: moody-bounce 1s ease-in-out infinite;
+}
+
+.moody-avatar.shake {
+  animation: moody-shake 0.5s ease-in-out infinite;
+}
+
+.moody-avatar.pulse {
+  animation: moody-pulse 2s ease-in-out infinite;
+}
+
+.moody-avatar.wiggle {
+  animation: moody-wiggle 1s ease-in-out infinite;
+}
+
+.moody-avatar.spin {
+  animation: moody-spin 3s linear infinite;
+}
+
+@keyframes moody-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes moody-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
+}
+
+@keyframes moody-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes moody-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes moody-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Accessoire */
+.accessory-overlay {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Effekte */
+.effect-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.effect-particle {
+  position: absolute;
+  bottom: 100%;
+  font-size: 0.6em;
+  animation: particle-float 2s ease-out infinite;
+  opacity: 0;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Reactions Container */
+.reactions-container {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.reaction-bubble {
+  font-size: 1.5rem;
+  animation: float-up 2s ease-out forwards;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-60px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Level Badge */
+.level-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 2px solid var(--background);
+  z-index: 5;
+}
+
+/* Name */
+.moody-name {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cooldown Indicator */
+.cooldown-indicator {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  animation: cooldown-fade 3s linear forwards;
+}
+
+@keyframes cooldown-fade {
+  from { opacity: 0.5; }
+  to { opacity: 0; }
+}
+
+/* Cosmetic-spezifische Animationen */
+@keyframes rainbow-shift {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes aurora {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(30deg) brightness(1.2); }
+}
+
+@keyframes fire-flicker {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+@keyframes holographic {
+  0% { filter: hue-rotate(0deg) saturate(1.5); }
+  100% { filter: hue-rotate(360deg) saturate(1.5); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+  50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor; }
+}
+
+@keyframes legendary-shimmer {
+  0% { box-shadow: 0 0 15px #FFD700, inset 0 0 15px #FFD70033; }
+  50% { box-shadow: 0 0 25px #FFD700, inset 0 0 25px #FFD70066, 0 0 40px #FFD70044; }
+  100% { box-shadow: 0 0 15px #FFD700, inset 0 0 15px #FFD70033; }
+}

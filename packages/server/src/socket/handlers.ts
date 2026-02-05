@@ -8,11 +8,18 @@ import type {
   ClientMessage,
   ServerMessage,
   ErrorCodes,
+  MoodLevel,
+  EquippedCosmetics,
+  ReactionType,
+  MoodyReaction,
 } from '@playtogether/shared';
+import { generateId } from '@playtogether/shared';
 
 interface SocketData {
   playerId?: string;
   roomId?: string;
+  mood?: MoodLevel;
+  cosmetics?: EquippedCosmetics;
 }
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
@@ -66,6 +73,12 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           break;
         case 'update_settings':
           handleUpdateSettings(message.payload);
+          break;
+        case 'moody_update':
+          handleMoodyUpdate(message.payload);
+          break;
+        case 'moody_reaction':
+          handleMoodyReaction(message.payload);
           break;
         default:
           sendError('INVALID_ACTION', 'Unbekannte Aktion');
@@ -282,6 +295,59 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           room: roomManager.getRoomState(room),
         },
       });
+    }
+
+    // ============================================
+    // MOODY HANDLERS
+    // ============================================
+
+    function handleMoodyUpdate(payload: { mood: MoodLevel; cosmetics: EquippedCosmetics }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      // Lokalen State aktualisieren
+      socketData.mood = payload.mood;
+      socketData.cosmetics = payload.cosmetics;
+
+      // Allen anderen Spielern im Raum mitteilen
+      socket.to(socketData.roomId).emit('message', {
+        type: 'moody_updated',
+        payload: {
+          playerId: socketData.playerId,
+          mood: payload.mood,
+          cosmetics: payload.cosmetics,
+        },
+      });
+
+      console.log(`😊 ${socketData.playerId} ist jetzt: ${payload.mood}`);
+    }
+
+    function handleMoodyReaction(payload: { reactionType: ReactionType; toPlayerId?: string }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const reaction: MoodyReaction = {
+        id: generateId(),
+        fromPlayerId: socketData.playerId,
+        toPlayerId: payload.toPlayerId,
+        type: payload.reactionType,
+        timestamp: Date.now(),
+      };
+
+      // An alle im Raum senden (oder nur an Ziel, wenn spezifiziert)
+      if (payload.toPlayerId) {
+        // Gezielte Reaction - an alle senden, damit sie die Animation sehen
+        broadcastToRoom(socketData.roomId, {
+          type: 'moody_reaction_received',
+          payload: { reaction },
+        });
+      } else {
+        // Broadcast-Reaction an alle
+        broadcastToRoom(socketData.roomId, {
+          type: 'moody_reaction_received',
+          payload: { reaction },
+        });
+      }
+
+      console.log(`🎉 Reaction von ${socketData.playerId}: ${payload.reactionType}`);
     }
 
     // Verbindung getrennt

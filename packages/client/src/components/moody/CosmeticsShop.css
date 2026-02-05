@@ -1,0 +1,266 @@
+/* CosmeticsShop Styles */
+
+.cosmetics-shop {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--surface-light);
+}
+
+.shop-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.shop-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+/* Preview */
+.shop-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--surface-light), var(--surface));
+}
+
+.shop-preview-level {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Categories */
+.shop-categories {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  overflow-x: auto;
+  background: var(--background);
+  -webkit-overflow-scrolling: touch;
+}
+
+.shop-category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.shop-category-btn:hover {
+  background: var(--surface-light);
+}
+
+.shop-category-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.shop-category-icon {
+  font-size: 1.2rem;
+}
+
+.shop-category-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Items Grid */
+.shop-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.shop-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-item:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.shop-item.unlocked:hover {
+  border-color: var(--primary);
+}
+
+.shop-item.equipped {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.shop-item.locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.shop-item-rarity {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.shop-item-preview {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.shop-item-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+
+.shop-item-badge {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.shop-item-badge.equipped {
+  background: var(--success);
+  color: white;
+}
+
+.shop-item-locked {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius);
+}
+
+.shop-item-progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.shop-item-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.3s;
+}
+
+.shop-item-unlock-text {
+  font-size: 0.6rem;
+  color: white;
+  text-align: center;
+}
+
+/* Legend */
+.shop-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--surface-light);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.legend-title {
+  font-weight: 600;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* ============================================
+   Cosmetic Selector (Compact)
+   ============================================ */
+
+.cosmetic-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cosmetic-selector-item {
+  width: 44px;
+  height: 44px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-light);
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cosmetic-selector-item:hover {
+  background: var(--surface);
+  transform: scale(1.05);
+}
+
+.cosmetic-selector-item.selected {
+  background: var(--surface);
+  border-width: 2px;
+}

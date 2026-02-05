@@ -290,5 +290,24 @@ function handleServerMessage(
       set({ error: message.payload.message });
       console.error('Server error:', message.payload);
       break;
+
+    // Moody-Nachrichten - werden lazy importiert um zirkuläre Abhängigkeiten zu vermeiden
+    case 'moody_updated': {
+      import('./moodyStore').then(({ useMoodyStore }) => {
+        useMoodyStore.getState().setPlayerMood(
+          message.payload.playerId,
+          message.payload.mood,
+          message.payload.cosmetics
+        );
+      });
+      break;
+    }
+
+    case 'moody_reaction_received': {
+      import('./moodyStore').then(({ useMoodyStore }) => {
+        useMoodyStore.getState().addIncomingReaction(message.payload.reaction);
+      });
+      break;
+    }
   }
 }
