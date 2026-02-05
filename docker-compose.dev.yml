@@ -5,6 +5,34 @@
 
 services:
   # ===========================================
+  # PostgreSQL Database (Development)
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: playtogether-db-dev
+    environment:
+      POSTGRES_USER: playtogether
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: playtogether_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - playtogether-dev-network
+
+  # ===========================================
+  # Redis (Development)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: playtogether-redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - playtogether-dev-network
+
+  # ===========================================
   # Backend Server (Development with hot-reload)
   # ===========================================
   server:
@@ -18,9 +46,16 @@ services:
       - NODE_ENV=development
       - PORT=3001
       - CLIENT_URL=http://localhost:5173
+      - DATABASE_URL=postgresql://playtogether:dev_password@postgres:5432/playtogether_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=development_secret_key
     volumes:
       - ./packages/server/src:/app/packages/server/src:ro
+      - ./packages/server/prisma:/app/packages/server/prisma:ro
       - ./packages/shared/src:/app/packages/shared/src:ro
+    depends_on:
+      - postgres
+      - redis
     networks:
       - playtogether-dev-network
 
@@ -49,3 +84,6 @@ services:
 networks:
   playtogether-dev-network:
     driver: bridge
+
+volumes:
+  postgres_dev_data:

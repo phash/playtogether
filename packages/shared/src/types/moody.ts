@@ -242,7 +242,7 @@ export interface EquippedCosmetics {
  * Spieler-Profil mit Moody-Daten
  */
 export interface MoodyProfile {
-  oderId: string;
+  userId: string;
   unlockedCosmetics: string[];     // Array von Item IDs
   stats: MoodyStats;
   level: number;
@@ -257,7 +257,7 @@ export interface MoodyStats {
   gamesPlayed: number;
   gamesWon: number;
   reactionsSent: number;
-visionsReceived: number;
+  reactionsReceived: number;
   currentStreak: number;
   longestStreak: number;
   lastPlayedAt: number;

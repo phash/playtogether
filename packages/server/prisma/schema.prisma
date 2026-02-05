@@ -1,0 +1,234 @@
+// PlayTogether Database Schema
+// Using Prisma ORM with PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================
+// USER & AUTHENTICATION
+// ===========================================
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Auth
+  email         String?  @unique
+  passwordHash  String?
+  isGuest       Boolean  @default(true)
+
+  // Profile
+  username      String   @unique
+  displayName   String?
+
+  // Moody Avatar
+  moody         Moody?
+
+  // Statistics
+  stats         UserStats?
+
+  // Game History
+  gameSessions  GameParticipant[]
+
+  // Achievements
+  achievements  UserAchievement[]
+
+  // Sessions for auth
+  sessions      Session[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Device info
+  userAgent String?
+  ipAddress String?
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ===========================================
+// MOODY AVATAR SYSTEM
+// ===========================================
+
+model Moody {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  // Current mood state
+  currentMood String @default("neutral")
+
+  // Level & XP
+  level Int @default(1)
+  xp    Int @default(0)
+
+  // Equipped cosmetics (stored as JSON)
+  equippedBackground String? @default("bg_default")
+  equippedBorder     String? @default("border_default")
+  equippedAccessory  String? @default("acc_none")
+  equippedEffect     String? @default("effect_none")
+  equippedTrail      String? @default("trail_none")
+
+  // Unlocked cosmetics (array of IDs)
+  unlockedCosmetics String[] @default(["bg_default", "border_default", "acc_none", "effect_none", "trail_none"])
+
+  // Streak tracking
+  currentStreak  Int      @default(0)
+  longestStreak  Int      @default(0)
+  lastPlayedAt   DateTime?
+
+  @@index([userId])
+}
+
+// ===========================================
+// USER STATISTICS
+// ===========================================
+
+model UserStats {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // General stats
+  gamesPlayed       Int @default(0)
+  gamesWon          Int @default(0)
+  totalPlayTimeMinutes Int @default(0)
+
+  // Moody stats
+  reactionsSent     Int @default(0)
+  reactionsReceived Int @default(0)
+  moodChanges       Int @default(0)
+
+  // Game-specific stats (stored as JSON for flexibility)
+  quizCorrectAnswers   Int @default(0)
+  quizTotalAnswers     Int @default(0)
+  quizFastestAnswerMs  Int?
+
+  drawingGamesPlayed   Int @default(0)
+  drawingsGuessedCorrectly Int @default(0)
+
+  reactionBestTimeMs   Int?
+  reactionGamesWon     Int @default(0)
+
+  @@index([userId])
+}
+
+// ===========================================
+// ACHIEVEMENTS
+// ===========================================
+
+model Achievement {
+  id          String @id @default(cuid())
+  code        String @unique  // e.g., "first_win", "streak_7", "level_10"
+  name        String
+  description String
+  icon        String         // Emoji or icon identifier
+  rarity      String         // common, uncommon, rare, epic, legendary
+
+  // Unlock condition (stored as JSON)
+  condition   Json
+
+  // Reward
+  xpReward    Int @default(0)
+  cosmeticReward String?     // Cosmetic ID if any
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// ===========================================
+// GAME SESSIONS & HISTORY
+// ===========================================
+
+model GameSession {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  endedAt   DateTime?
+
+  // Room info
+  roomCode  String
+  gameType  String   // quiz, drawing, wordguess, reaction
+
+  // Settings snapshot
+  settings  Json
+
+  // Participants
+  participants GameParticipant[]
+
+  // Game result
+  winnerId  String?
+  finalScores Json?  // { oderId: score }
+
+  // Duration
+  durationMinutes Int?
+
+  @@index([roomCode])
+  @@index([gameType])
+  @@index([createdAt])
+}
+
+model GameParticipant {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSessionId String
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+
+  // Performance
+  score         Int      @default(0)
+  rank          Int?
+
+  // Stats for this game
+  stats         Json?    // Game-specific stats
+
+  @@unique([userId, gameSessionId])
+  @@index([userId])
+  @@index([gameSessionId])
+}
+
+// ===========================================
+// FRIENDS & SOCIAL
+// ===========================================
+
+model Friendship {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  friendId  String
+
+  status    String   @default("pending") // pending, accepted, blocked
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
