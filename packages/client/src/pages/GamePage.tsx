@@ -7,6 +7,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { getGameInfo } from '@playtogether/shared';
 import QuizGame from '../games/QuizGame';
+import WouldYouRatherGame from '../games/WouldYouRatherGame';
+import MostLikelyGame from '../games/MostLikelyGame';
+import EitherOrGame from '../games/EitherOrGame';
+import WordChainGame from '../games/WordChainGame';
+import AnagramGame from '../games/AnagramGame';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -51,6 +56,18 @@ export default function GamePage() {
         return <PlaceholderGame name="Wort-Raten" icon="💬" />;
       case 'reaction':
         return <PlaceholderGame name="Reaktions-Test" icon="⚡" />;
+      // Party & Spaß
+      case 'wouldyourather':
+        return <WouldYouRatherGame />;
+      case 'mostlikely':
+        return <MostLikelyGame />;
+      case 'eitheror':
+        return <EitherOrGame />;
+      // Wort-Spiele
+      case 'wordchain':
+        return <WordChainGame />;
+      case 'anagram':
+        return <AnagramGame />;
       default:
         return <PlaceholderGame name="Unbekannt" icon="❓" />;
     }

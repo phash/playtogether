@@ -4,6 +4,7 @@
 
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from '../rooms/RoomManager.js';
+import { gameManager } from '../games/GameManager.js';
 import type {
   ClientMessage,
   ServerMessage,
@@ -12,6 +13,7 @@ import type {
   EquippedCosmetics,
   ReactionType,
   MoodyReaction,
+  AnyGameState,
 } from '@playtogether/shared';
 import { generateId } from '@playtogether/shared';
 
@@ -167,20 +169,24 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
     function handleLeaveRoom() {
       if (!socketData.playerId || !socketData.roomId) return;
 
+      const roomId = socketData.roomId;
       const result = roomManager.leaveRoom(socketData.playerId);
 
       if (result) {
         // Anderen Spielern mitteilen
-        broadcastToRoom(socketData.roomId, {
+        broadcastToRoom(roomId, {
           type: 'player_left',
           payload: {
             playerId: socketData.playerId,
             newHostId: result.newHostId,
           },
         });
+      } else {
+        // Raum wurde gelöscht, Spiel auch beenden
+        gameManager.endGame(roomId);
       }
 
-      socket.leave(socketData.roomId);
+      socket.leave(roomId);
       socketData.playerId = undefined;
       socketData.roomId = undefined;
     }
@@ -239,38 +245,65 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         payload: { countdown: 3 },
       });
 
+      const roomId = socketData.roomId;
+
       // Nach Countdown das Spiel starten
       setTimeout(() => {
-        if (!socketData.roomId) return;
-        roomManager.updateRoomStatus(socketData.roomId, 'playing');
+        if (!roomId) return;
+        roomManager.updateRoomStatus(roomId, 'playing');
 
-        // Initiales Spielstate senden
-        broadcastToRoom(socketData.roomId, {
-          type: 'game_state',
-          payload: {
-            state: {
-              type: room.gameType,
-              currentRound: 1,
-              totalRounds: room.settings.roundCount,
-              phase: 'active',
-              timeRemaining: room.settings.timePerRound,
-              scores: Object.fromEntries(
-                [...room.players.keys()].map((id) => [id, 0])
-              ),
+        // Event Callback für Spiel-Events
+        const onGameEvent = (event: string, data: unknown) => {
+          broadcastToRoom(roomId, {
+            type: event as any,
+            payload: data,
+          });
+        };
+
+        // Prüfen ob Spieltyp unterstützt wird
+        if (gameManager.isGameTypeSupported(room.gameType)) {
+          // Spiel-Engine erstellen und starten
+          const engine = gameManager.createGame(room, onGameEvent);
+          if (engine) {
+            engine.start();
+          }
+        } else {
+          // Fallback für nicht implementierte Spiele
+          broadcastToRoom(roomId, {
+            type: 'game_state',
+            payload: {
+              state: {
+                type: room.gameType,
+                currentRound: 1,
+                totalRounds: room.settings.roundCount,
+                phase: 'active',
+                timeRemaining: room.settings.timePerRound,
+                scores: Object.fromEntries(
+                  [...room.players.keys()].map((id) => [id, 0])
+                ),
+              },
             },
-          },
-        });
+          });
+        }
       }, 3000);
     }
 
     function handleGameAction(payload: { action: string; data: unknown }) {
       if (!socketData.roomId || !socketData.playerId) return;
 
-      // Spielspezifische Aktionen hier verarbeiten
-      // Diese werden später von den Spielmodulen übernommen
-      console.log(
-        `🎮 Spielaktion von ${socketData.playerId}: ${payload.action}`
+      // Spielaktion an GameManager weiterleiten
+      const handled = gameManager.handleAction(
+        socketData.roomId,
+        socketData.playerId,
+        payload.action,
+        payload.data
       );
+
+      if (!handled) {
+        console.log(
+          `🎮 Unbehandelte Spielaktion von ${socketData.playerId}: ${payload.action}`
+        );
+      }
     }
 
     function handleUpdateSettings(payload: any) {

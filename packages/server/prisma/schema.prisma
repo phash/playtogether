@@ -186,7 +186,7 @@ model GameSession {
 
   // Game result
   winnerId  String?
-  finalScores Json?  // { oderId: score }
+  finalScores Json?  // { userId: score }
 
   // Duration
   durationMinutes Int?

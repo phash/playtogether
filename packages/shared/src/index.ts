@@ -7,3 +7,4 @@ export * from './types/messages.js';
 export * from './types/moody.js';
 export * from './utils/id.js';
 export * from './data/cosmetics.js';
+export * from './data/gameContent.js';
