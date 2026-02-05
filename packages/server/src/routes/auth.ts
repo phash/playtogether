@@ -2,13 +2,13 @@
  * Authentication Routes
  */
 
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { userService } from '../services/UserService.js';
 import { moodyService } from '../services/MoodyService.js';
 import { requireAuth } from '../middleware/auth.js';
 
-const router = Router();
+const router: RouterType = Router();
 
 // Validation schemas
 const guestSchema = z.object({

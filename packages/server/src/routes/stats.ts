@@ -2,12 +2,12 @@
  * Stats Routes - API for game statistics and history
  */
 
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { statsService } from '../services/StatsService.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 
-const router = Router();
+const router: RouterType = Router();
 
 /**
  * GET /api/stats

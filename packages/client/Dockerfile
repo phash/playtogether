@@ -18,8 +18,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/client/node_modules ./packages/client/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/package.json ./
 
 # Copy source files
 COPY tsconfig.base.json ./

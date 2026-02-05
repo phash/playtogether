@@ -6,8 +6,10 @@ Eine Multiplayer-Plattform für kleine Spiele, die man gemeinsam über Smartphon
 
 - **Echtzeit-Multiplayer** via WebSocket
 - **Mobile-First Design** - optimiert für Smartphones
+- **Native Android App** mit Jetpack Compose
 - **Raum-System** mit einfachen 4-stelligen Codes
-- **Mehrere Spielmodi** (Quiz, Zeichnen, Wörter raten, Reaktionstest)
+- **9 Spielmodi** in 3 Kategorien (Klassisch, Party, Wort-Spiele)
+- **Moody-System** - Virtuelles Haustier mit Belohnungen
 
 ## Projektstruktur
 
@@ -15,9 +17,10 @@ Eine Multiplayer-Plattform für kleine Spiele, die man gemeinsam über Smartphon
 playtogether/
 ├── packages/
 │   ├── shared/     # Gemeinsame Typen und Utilities
-│   ├── server/     # Backend (Express + Socket.io)
+│   ├── server/     # Backend (Express + Socket.io + Prisma)
 │   └── client/     # Frontend (React + Vite)
-└── games/          # Spielmodule (geplant)
+├── android/        # Native Android App (Kotlin + Jetpack Compose)
+└── docker-compose.yml
 ```
 
 ## Schnellstart
@@ -77,7 +80,9 @@ npm run dev
 ## Technologie-Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Zustand
-- **Backend**: Node.js, Express, Socket.io
+- **Backend**: Node.js, Express, Socket.io, Prisma
+- **Android**: Kotlin, Jetpack Compose, Material 3
+- **Database**: PostgreSQL, Redis
 - **Shared**: TypeScript Typen und Utilities
 - **Deployment**: Docker, Docker Compose, nginx
 
@@ -124,12 +129,40 @@ curl http://localhost/health
 
 ## Verfügbare Spiele
 
-| Spiel | Status | Spieler |
-|-------|--------|---------|
-| Quiz Battle | ✅ Demo | 2-8 |
-| Kritzel & Rate | 🚧 Geplant | 3-10 |
-| Wort-Raten | 🚧 Geplant | 4-12 |
-| Reaktions-Test | 🚧 Geplant | 2-8 |
+### Klassische Spiele
+| Spiel | Status | Spieler | Beschreibung |
+|-------|--------|---------|--------------|
+| Quiz Battle | ✅ Fertig | 2-8 | 100 Fragen, 20s Timer, Feedback-System |
+| Kritzel & Rate | 🚧 Geplant | 3-10 | Zeichnen und Raten |
+| Wort-Raten | 🚧 Geplant | 4-12 | Wörter erklären |
+| Reaktions-Test | 🚧 Geplant | 2-8 | Schnellste Reflexe |
+
+### Party & Spaß
+| Spiel | Status | Spieler | Beschreibung |
+|-------|--------|---------|--------------|
+| Würdest du eher? | ✅ Fertig | 2-12 | Wähle zwischen zwei Optionen |
+| Wer würde am ehesten? | ✅ Fertig | 3-10 | Stimme für Mitspieler ab |
+| Entweder/Oder | ✅ Fertig | 2-20 | Schnelle Entscheidungen |
+
+### Wort-Spiele
+| Spiel | Status | Spieler | Beschreibung |
+|-------|--------|---------|--------------|
+| Wortkette | ✅ Fertig | 2-8 | Letzter Buchstabe = Erster des nächsten |
+| Anagramme | ✅ Fertig | 2-8 | Bilde Wörter aus Buchstaben |
+
+## Android App
+
+Die native Android-App ist verfügbar als APK-Download:
+
+```
+http://localhost:3003/download/playtogether.apk
+```
+
+**Features:**
+- Native Jetpack Compose UI
+- Material Design 3
+- WebSocket-Integration
+- Offline-fähig (Lobby)
 
 ## Lizenz
 

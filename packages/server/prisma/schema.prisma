@@ -232,3 +232,77 @@ model Friendship {
   @@index([userId])
   @@index([friendId])
 }
+
+// ===========================================
+// MONTHLY HIGHSCORE SYSTEM
+// ===========================================
+
+// Tracks which players have played together (form a "group")
+model PlayerConnection {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Two players who played together (always store smaller ID first)
+  playerAId String
+  playerBId String
+
+  // How many games they played together
+  gamesPlayedTogether Int @default(1)
+
+  // Last time they played together
+  lastPlayedAt DateTime @default(now())
+
+  @@unique([playerAId, playerBId])
+  @@index([playerAId])
+  @@index([playerBId])
+}
+
+// Monthly score tracking
+model MonthlyScore {
+  id        String   @id @default(cuid())
+
+  // Which month (stored as YYYY-MM format, e.g., "2026-02")
+  month     String
+
+  // User
+  userId    String
+
+  // Score (number of wins this month)
+  wins      Int      @default(0)
+
+  // Games played this month
+  gamesPlayed Int    @default(0)
+
+  // Total score points earned
+  totalScore Int     @default(0)
+
+  @@unique([month, userId])
+  @@index([month])
+  @@index([userId])
+  @@index([month, wins])
+}
+
+// Crown holder - who has the crown this month
+model CrownHolder {
+  id        String   @id @default(cuid())
+
+  // Which month the crown was won (the previous month)
+  wonMonth  String   @unique
+
+  // User who holds the crown
+  userId    String
+
+  // When crown was awarded
+  awardedAt DateTime @default(now())
+
+  // When crown expires (end of current month)
+  expiresAt DateTime
+
+  // Stats from winning month
+  wins      Int
+  gamesPlayed Int
+
+  @@index([userId])
+  @@index([expiresAt])
+}

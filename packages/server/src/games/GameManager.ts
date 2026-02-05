@@ -13,6 +13,7 @@ import { MostLikelyEngine } from './MostLikelyEngine.js';
 import { EitherOrEngine } from './EitherOrEngine.js';
 import { WordChainEngine } from './WordChainEngine.js';
 import { AnagramEngine } from './AnagramEngine.js';
+import { QuizEngine } from './QuizEngine.js';
 
 type GameEngineConstructor = new (
   config: GameEngineConfig,
@@ -20,6 +21,7 @@ type GameEngineConstructor = new (
 ) => BaseGameEngine;
 
 const GAME_ENGINES: Partial<Record<GameType, GameEngineConstructor>> = {
+  quiz: QuizEngine,
   wouldyourather: WouldYouRatherEngine,
   mostlikely: MostLikelyEngine,
   eitheror: EitherOrEngine,

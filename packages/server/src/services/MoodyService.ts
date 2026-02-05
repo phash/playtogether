@@ -144,6 +144,28 @@ export class MoodyService {
   }
 
   /**
+   * Unlock a specific cosmetic for a user
+   */
+  async unlockCosmetic(userId: string, cosmeticId: string): Promise<boolean> {
+    const moody = await this.getMoody(userId);
+    if (!moody) return false;
+
+    // Already unlocked
+    if (moody.unlockedCosmetics.includes(cosmeticId)) return true;
+
+    await prisma.moody.update({
+      where: { userId },
+      data: {
+        unlockedCosmetics: {
+          push: cosmeticId,
+        },
+      },
+    });
+
+    return true;
+  }
+
+  /**
    * Record a sent reaction
    */
   async recordReactionSent(userId: string): Promise<void> {

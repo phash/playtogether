@@ -256,7 +256,7 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         const onGameEvent = (event: string, data: unknown) => {
           broadcastToRoom(roomId, {
             type: event as any,
-            payload: data,
+            payload: data as any,
           });
         };
 

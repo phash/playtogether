@@ -143,6 +143,15 @@ export interface QuizQuestion {
   correctIndex: number;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  // Feedback statistics (optional, nur für Server)
+  thumbsUp?: number;
+  thumbsDown?: number;
+}
+
+export interface QuizFeedback {
+  questionId: string;
+  playerId: string;
+  isPositive: boolean; // true = thumbs up, false = thumbs down
 }
 
 export interface QuizGameState extends GameState {
@@ -150,6 +159,13 @@ export interface QuizGameState extends GameState {
   currentQuestion?: QuizQuestion;
   playerAnswers: Record<string, number | null>;
   questionStartTime: number;
+  // Feedback für aktuelle Frage
+  questionFeedback: Record<string, boolean | null>; // playerId -> true/false/null
+  // Antwortzeiten für Scoring
+  answerTimes: Record<string, number>; // playerId -> ms since question start
+  // Zeigt die korrekte Antwort an (in reveal phase)
+  showCorrectAnswer?: boolean;
+  correctAnswerIndex?: number;
 }
 
 export interface QuizAnswer {
@@ -157,6 +173,15 @@ export interface QuizAnswer {
   answerIndex: number;
   answeredAt: number;
 }
+
+// Quiz-Konfiguration
+export const QUIZ_CONFIG = {
+  QUESTIONS_PER_ROUND: 9,
+  TIME_PER_QUESTION: 20, // Sekunden
+  POINTS_CORRECT: 100,
+  POINTS_SPEED_BONUS_MAX: 50, // Bonus für schnelle Antworten
+  REVEAL_TIME: 3, // Sekunden für Ergebnis-Anzeige
+} as const;
 
 // ============================================
 // WÜRDEST DU EHER? (Would You Rather)

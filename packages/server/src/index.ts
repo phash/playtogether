@@ -7,6 +7,11 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Database
 import { prisma, disconnectPrisma } from './db/prisma.js';
@@ -22,9 +27,11 @@ import { socketAuth } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import moodyRoutes from './routes/moody.js';
 import statsRoutes from './routes/stats.js';
+import monthlyRoutes from './routes/monthly.js';
 
 // Services
 import { userService } from './services/UserService.js';
+import { monthlyScoreService } from './services/MonthlyScoreService.js';
 
 const PORT = process.env.PORT || 3001;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -38,6 +45,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Static files (APK download)
+app.use('/download', express.static(path.join(__dirname, '../public')));
 
 const httpServer = createServer(app);
 
@@ -83,6 +93,9 @@ app.use('/api/moody', moodyRoutes);
 
 // Stats routes
 app.use('/api/stats', statsRoutes);
+
+// Monthly leaderboard routes
+app.use('/api/monthly', monthlyRoutes);
 
 // Games list
 app.get('/api/games', (_req, res) => {
@@ -148,6 +161,28 @@ setInterval(async () => {
     console.error('Cleanup error:', error);
   }
 }, 60 * 60 * 1000); // Every hour
+
+// Check for monthly reset (runs every hour, but only processes on the 1st)
+let lastMonthlyResetCheck = '';
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // Only process on the 1st of the month, and only once per month
+    if (now.getDate() === 1 && lastMonthlyResetCheck !== currentMonth) {
+      console.log('📅 Processing monthly highscore reset...');
+      const result = await monthlyScoreService.processMonthlyReset();
+      lastMonthlyResetCheck = currentMonth;
+
+      if (result.winnerId) {
+        console.log(`👑 Monthly winner: ${result.winnerUsername} with ${result.wins} wins!`);
+      }
+    }
+  } catch (error) {
+    console.error('Monthly reset error:', error);
+  }
+}, 60 * 60 * 1000); // Check every hour
 
 // Server starten
 httpServer.listen(PORT, () => {

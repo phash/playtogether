@@ -6,7 +6,133 @@ import type {
   WouldYouRatherQuestion,
   MostLikelyQuestion,
   EitherOrQuestion,
+  QuizQuestion,
 } from '../types/game.js';
+
+// ============================================
+// QUIZ - 100 Fragen mit je 3 Antworten
+// ============================================
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  // === ALLGEMEINWISSEN (20 Fragen) ===
+  { id: 'q1', question: 'Wie viele Planeten hat unser Sonnensystem?', answers: ['7', '8', '9'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q2', question: 'Welches chemische Element hat das Symbol "Au"?', answers: ['Silber', 'Gold', 'Kupfer'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q3', question: 'Wie viele Kontinente gibt es auf der Erde?', answers: ['5', '6', '7'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q4', question: 'Welches Tier kann am längsten ohne Wasser überleben?', answers: ['Elefant', 'Kamel', 'Känguru-Ratte'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q5', question: 'Was ist die Hauptstadt von Australien?', answers: ['Sydney', 'Melbourne', 'Canberra'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q6', question: 'Wie viele Zähne hat ein erwachsener Mensch normalerweise?', answers: ['28', '32', '36'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q7', question: 'Welcher Planet ist der Sonne am nächsten?', answers: ['Venus', 'Mars', 'Merkur'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q8', question: 'Wie viele Stunden hat ein Tag?', answers: ['12', '24', '48'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q9', question: 'Was ist das größte Säugetier der Welt?', answers: ['Elefant', 'Blauwal', 'Giraffe'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q10', question: 'Welches Metall ist bei Raumtemperatur flüssig?', answers: ['Blei', 'Quecksilber', 'Zink'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q11', question: 'Wie viele Buchstaben hat das deutsche Alphabet?', answers: ['24', '26', '30'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q12', question: 'Welches Organ reinigt das Blut im menschlichen Körper?', answers: ['Leber', 'Niere', 'Milz'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q13', question: 'Was ist der längste Fluss der Welt?', answers: ['Amazonas', 'Nil', 'Jangtse'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q14', question: 'Wie viele Knochen hat ein erwachsener Mensch?', answers: ['186', '206', '226'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q15', question: 'Welches Gas atmen Pflanzen hauptsächlich ein?', answers: ['Sauerstoff', 'Stickstoff', 'Kohlendioxid'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q16', question: 'Was ist die Lichtgeschwindigkeit pro Sekunde (gerundet)?', answers: ['100.000 km', '300.000 km', '500.000 km'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'hard' },
+  { id: 'q17', question: 'Welches Land hat die meisten Einwohner?', answers: ['Indien', 'China', 'USA'], correctIndex: 0, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q18', question: 'Wie heißt der größte Ozean der Erde?', answers: ['Atlantik', 'Indischer Ozean', 'Pazifik'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'easy' },
+  { id: 'q19', question: 'Wie viele Herzkammern hat ein Mensch?', answers: ['2', '4', '6'], correctIndex: 1, category: 'Allgemeinwissen', difficulty: 'medium' },
+  { id: 'q20', question: 'Welches Vitamin produziert der Körper durch Sonnenlicht?', answers: ['Vitamin A', 'Vitamin C', 'Vitamin D'], correctIndex: 2, category: 'Allgemeinwissen', difficulty: 'medium' },
+
+  // === GEOGRAPHIE (15 Fragen) ===
+  { id: 'q21', question: 'Welches ist das größte Land der Welt (Fläche)?', answers: ['Kanada', 'China', 'Russland'], correctIndex: 2, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q22', question: 'In welchem Land liegt die Stadt Machu Picchu?', answers: ['Mexiko', 'Peru', 'Chile'], correctIndex: 1, category: 'Geographie', difficulty: 'medium' },
+  { id: 'q23', question: 'Welcher Fluss fließt durch Paris?', answers: ['Rhein', 'Seine', 'Loire'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q24', question: 'Wie heißt die Hauptstadt von Kanada?', answers: ['Toronto', 'Vancouver', 'Ottawa'], correctIndex: 2, category: 'Geographie', difficulty: 'medium' },
+  { id: 'q25', question: 'In welchem Land steht das Kolosseum?', answers: ['Griechenland', 'Italien', 'Spanien'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q26', question: 'Welches ist der höchste Berg der Welt?', answers: ['K2', 'Mount Everest', 'Kangchendzönga'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q27', question: 'In welchem Kontinent liegt Ägypten hauptsächlich?', answers: ['Asien', 'Afrika', 'Europa'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q28', question: 'Wie heißt die größte Insel der Welt?', answers: ['Madagaskar', 'Grönland', 'Borneo'], correctIndex: 1, category: 'Geographie', difficulty: 'medium' },
+  { id: 'q29', question: 'Welches Land hat die Form eines Stiefels?', answers: ['Spanien', 'Italien', 'Griechenland'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q30', question: 'Wie heißt die Hauptstadt von Japan?', answers: ['Osaka', 'Kyoto', 'Tokio'], correctIndex: 2, category: 'Geographie', difficulty: 'easy' },
+  { id: 'q31', question: 'Welcher See ist der größte der Welt?', answers: ['Viktoriasee', 'Kaspisches Meer', 'Baikalsee'], correctIndex: 1, category: 'Geographie', difficulty: 'hard' },
+  { id: 'q32', question: 'In welchem Land liegt die Sahara hauptsächlich?', answers: ['Ägypten', 'Algerien', 'Marokko'], correctIndex: 1, category: 'Geographie', difficulty: 'hard' },
+  { id: 'q33', question: 'Wie heißt die Hauptstadt von Brasilien?', answers: ['São Paulo', 'Rio de Janeiro', 'Brasília'], correctIndex: 2, category: 'Geographie', difficulty: 'medium' },
+  { id: 'q34', question: 'Welches Land grenzt an die meisten anderen Länder?', answers: ['Russland', 'China', 'Brasilien'], correctIndex: 1, category: 'Geographie', difficulty: 'hard' },
+  { id: 'q35', question: 'An welchem Meer liegt Barcelona?', answers: ['Atlantik', 'Mittelmeer', 'Schwarzes Meer'], correctIndex: 1, category: 'Geographie', difficulty: 'easy' },
+
+  // === GESCHICHTE (15 Fragen) ===
+  { id: 'q36', question: 'In welchem Jahr fiel die Berliner Mauer?', answers: ['1987', '1989', '1991'], correctIndex: 1, category: 'Geschichte', difficulty: 'easy' },
+  { id: 'q37', question: 'Wer war der erste Mensch auf dem Mond?', answers: ['Buzz Aldrin', 'Neil Armstrong', 'Yuri Gagarin'], correctIndex: 1, category: 'Geschichte', difficulty: 'easy' },
+  { id: 'q38', question: 'In welchem Jahrhundert lebte Leonardo da Vinci?', answers: ['14. Jahrhundert', '15./16. Jahrhundert', '17. Jahrhundert'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q39', question: 'Welches Imperium baute die Pyramiden von Gizeh?', answers: ['Römisches Reich', 'Altes Ägypten', 'Persisches Reich'], correctIndex: 1, category: 'Geschichte', difficulty: 'easy' },
+  { id: 'q40', question: 'Wann begann der Erste Weltkrieg?', answers: ['1912', '1914', '1916'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q41', question: 'Wer erfand den Buchdruck mit beweglichen Lettern?', answers: ['Gutenberg', 'Luther', 'Dürer'], correctIndex: 0, category: 'Geschichte', difficulty: 'easy' },
+  { id: 'q42', question: 'In welchem Jahr wurde Amerika von Kolumbus entdeckt?', answers: ['1482', '1492', '1502'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q43', question: 'Welcher König von Frankreich wurde während der Revolution hingerichtet?', answers: ['Ludwig XIV', 'Ludwig XVI', 'Ludwig XVIII'], correctIndex: 1, category: 'Geschichte', difficulty: 'hard' },
+  { id: 'q44', question: 'Wann wurde die Titanic versenkt?', answers: ['1910', '1912', '1914'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q45', question: 'Welches Land war KEINE Achsenmacht im Zweiten Weltkrieg?', answers: ['Japan', 'Spanien', 'Italien'], correctIndex: 1, category: 'Geschichte', difficulty: 'hard' },
+  { id: 'q46', question: 'Wer war der erste deutsche Bundeskanzler?', answers: ['Willy Brandt', 'Konrad Adenauer', 'Ludwig Erhard'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q47', question: 'In welchem Jahr wurde Deutschland wiedervereinigt?', answers: ['1989', '1990', '1991'], correctIndex: 1, category: 'Geschichte', difficulty: 'easy' },
+  { id: 'q48', question: 'Welcher Krieg dauerte 100 Jahre?', answers: ['Engländer vs. Franzosen', 'Römer vs. Griechen', 'Spanier vs. Portugiesen'], correctIndex: 0, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q49', question: 'Wer schrieb "Das Kapital"?', answers: ['Lenin', 'Marx', 'Engels'], correctIndex: 1, category: 'Geschichte', difficulty: 'medium' },
+  { id: 'q50', question: 'Wann wurde die EU gegründet (als EWG)?', answers: ['1947', '1957', '1967'], correctIndex: 1, category: 'Geschichte', difficulty: 'hard' },
+
+  // === WISSENSCHAFT & TECHNIK (15 Fragen) ===
+  { id: 'q51', question: 'Wer entwickelte die Relativitätstheorie?', answers: ['Newton', 'Einstein', 'Hawking'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'easy' },
+  { id: 'q52', question: 'Was ist H2O?', answers: ['Sauerstoff', 'Wasser', 'Wasserstoff'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'easy' },
+  { id: 'q53', question: 'Welches Teilchen hat eine negative Ladung?', answers: ['Proton', 'Neutron', 'Elektron'], correctIndex: 2, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q54', question: 'Wie heißt das Zentrum einer Zelle?', answers: ['Zellkern', 'Mitochondrium', 'Ribosom'], correctIndex: 0, category: 'Wissenschaft', difficulty: 'easy' },
+  { id: 'q55', question: 'Welcher Planet hat die meisten Monde?', answers: ['Jupiter', 'Saturn', 'Uranus'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'hard' },
+  { id: 'q56', question: 'Was misst ein Seismograph?', answers: ['Luftdruck', 'Erdbeben', 'Windstärke'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q57', question: 'Welches Element ist das häufigste im Universum?', answers: ['Sauerstoff', 'Kohlenstoff', 'Wasserstoff'], correctIndex: 2, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q58', question: 'Wer entdeckte das Penicillin?', answers: ['Fleming', 'Pasteur', 'Koch'], correctIndex: 0, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q59', question: 'Was ist die Einheit für elektrischen Widerstand?', answers: ['Volt', 'Ampere', 'Ohm'], correctIndex: 2, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q60', question: 'Welches Gas macht den größten Teil unserer Atmosphäre aus?', answers: ['Sauerstoff', 'Stickstoff', 'Kohlendioxid'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q61', question: 'Was ist der Siedepunkt von Wasser auf Meereshöhe?', answers: ['90°C', '100°C', '110°C'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'easy' },
+  { id: 'q62', question: 'Wie viele Chromosomen hat ein Mensch?', answers: ['23', '46', '48'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q63', question: 'Welches Organ produziert Insulin?', answers: ['Leber', 'Bauchspeicheldrüse', 'Niere'], correctIndex: 1, category: 'Wissenschaft', difficulty: 'medium' },
+  { id: 'q64', question: 'Was ist die kleinste Einheit des Lebens?', answers: ['Atom', 'Molekül', 'Zelle'], correctIndex: 2, category: 'Wissenschaft', difficulty: 'easy' },
+  { id: 'q65', question: 'Wie schnell ist Schall in der Luft (ca.)?', answers: ['340 m/s', '540 m/s', '740 m/s'], correctIndex: 0, category: 'Wissenschaft', difficulty: 'hard' },
+
+  // === SPORT (15 Fragen) ===
+  { id: 'q66', question: 'Wie viele Spieler hat eine Fußballmannschaft auf dem Feld?', answers: ['10', '11', '12'], correctIndex: 1, category: 'Sport', difficulty: 'easy' },
+  { id: 'q67', question: 'In welchem Sport gibt es einen "Slam Dunk"?', answers: ['Football', 'Basketball', 'Volleyball'], correctIndex: 1, category: 'Sport', difficulty: 'easy' },
+  { id: 'q68', question: 'Wo fanden die ersten modernen Olympischen Spiele statt?', answers: ['Rom', 'Paris', 'Athen'], correctIndex: 2, category: 'Sport', difficulty: 'medium' },
+  { id: 'q69', question: 'Wie lange dauert ein Eishockey-Drittel?', answers: ['15 Minuten', '20 Minuten', '25 Minuten'], correctIndex: 1, category: 'Sport', difficulty: 'medium' },
+  { id: 'q70', question: 'Welches Land hat die meisten Fußball-WM-Titel?', answers: ['Deutschland', 'Argentinien', 'Brasilien'], correctIndex: 2, category: 'Sport', difficulty: 'easy' },
+  { id: 'q71', question: 'Wie viele Punkte gibt es für einen Touchdown im Football?', answers: ['5', '6', '7'], correctIndex: 1, category: 'Sport', difficulty: 'medium' },
+  { id: 'q72', question: 'Welcher Tennisspieler hat die meisten Grand-Slam-Titel?', answers: ['Federer', 'Nadal', 'Djokovic'], correctIndex: 2, category: 'Sport', difficulty: 'medium' },
+  { id: 'q73', question: 'In welchem Sport wird ein Puck verwendet?', answers: ['Hockey', 'Curling', 'Beide'], correctIndex: 0, category: 'Sport', difficulty: 'easy' },
+  { id: 'q74', question: 'Wie viele Ringe hat das olympische Symbol?', answers: ['4', '5', '6'], correctIndex: 1, category: 'Sport', difficulty: 'easy' },
+  { id: 'q75', question: 'Welches Land gewann die Fußball-WM 2014?', answers: ['Brasilien', 'Deutschland', 'Argentinien'], correctIndex: 1, category: 'Sport', difficulty: 'easy' },
+  { id: 'q76', question: 'Wie viele Sätze braucht man mindestens um ein Tennis-Match zu gewinnen?', answers: ['2', '3', '4'], correctIndex: 0, category: 'Sport', difficulty: 'medium' },
+  { id: 'q77', question: 'In welcher Sportart gibt es einen "Albatross"?', answers: ['Tennis', 'Golf', 'Badminton'], correctIndex: 1, category: 'Sport', difficulty: 'hard' },
+  { id: 'q78', question: 'Wie viele Bahnen hat ein olympisches Schwimmbecken?', answers: ['6', '8', '10'], correctIndex: 1, category: 'Sport', difficulty: 'medium' },
+  { id: 'q79', question: 'Welche Farbe hat die 8er-Kugel beim Poolbillard?', answers: ['Rot', 'Schwarz', 'Blau'], correctIndex: 1, category: 'Sport', difficulty: 'easy' },
+  { id: 'q80', question: 'Wie lange läuft man bei einem Marathon?', answers: ['40,195 km', '42,195 km', '44,195 km'], correctIndex: 1, category: 'Sport', difficulty: 'medium' },
+
+  // === UNTERHALTUNG & KULTUR (20 Fragen) ===
+  { id: 'q81', question: 'Wer sang "Thriller"?', answers: ['Prince', 'Michael Jackson', 'Whitney Houston'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q82', question: 'In welchem Film sagt man "Möge die Macht mit dir sein"?', answers: ['Star Trek', 'Star Wars', 'Herr der Ringe'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q83', question: 'Wer schrieb "Romeo und Julia"?', answers: ['Goethe', 'Shakespeare', 'Schiller'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q84', question: 'Welche Band sang "Bohemian Rhapsody"?', answers: ['The Beatles', 'Queen', 'Led Zeppelin'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q85', question: 'Wer malte die Mona Lisa?', answers: ['Michelangelo', 'Leonardo da Vinci', 'Raffael'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q86', question: 'In welcher Stadt steht die Freiheitsstatue?', answers: ['Washington', 'New York', 'Boston'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q87', question: 'Wer ist der Autor von "Harry Potter"?', answers: ['J.R.R. Tolkien', 'J.K. Rowling', 'Stephen King'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q88', question: 'Welches Instrument spielt ein Pianist?', answers: ['Geige', 'Klavier', 'Gitarre'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q89', question: 'In welchem Jahr kam das erste iPhone auf den Markt?', answers: ['2005', '2007', '2009'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'medium' },
+  { id: 'q90', question: 'Wer spielte Iron Man im MCU?', answers: ['Chris Evans', 'Robert Downey Jr.', 'Chris Hemsworth'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q91', question: 'Welche Serie spielt in Westeros?', answers: ['Vikings', 'Game of Thrones', 'The Witcher'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q92', question: 'Wer komponierte die "Neunte Symphonie"?', answers: ['Mozart', 'Bach', 'Beethoven'], correctIndex: 2, category: 'Unterhaltung', difficulty: 'medium' },
+  { id: 'q93', question: 'In welchem Land wurde Pizza erfunden?', answers: ['Griechenland', 'Italien', 'USA'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q94', question: 'Welcher Disney-Film hat eine Eiskönigin?', answers: ['Frozen', 'Moana', 'Tangled'], correctIndex: 0, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q95', question: 'Wer singt "Bad Guy"?', answers: ['Taylor Swift', 'Billie Eilish', 'Ariana Grande'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q96', question: 'Wie heißt das Videospiel mit dem Klempner Mario?', answers: ['Sonic', 'Super Mario', 'Zelda'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q97', question: 'Welcher Streaming-Dienst produziert "Stranger Things"?', answers: ['Amazon Prime', 'Netflix', 'Disney+'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q98', question: 'Wer schrieb "Die Verwandlung"?', answers: ['Kafka', 'Hesse', 'Mann'], correctIndex: 0, category: 'Unterhaltung', difficulty: 'medium' },
+  { id: 'q99', question: 'Welche Farbe hat der Umhang von Superman?', answers: ['Blau', 'Rot', 'Gelb'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+  { id: 'q100', question: 'In welchem Land wurde Oktoberfest geboren?', answers: ['Österreich', 'Deutschland', 'Schweiz'], correctIndex: 1, category: 'Unterhaltung', difficulty: 'easy' },
+];
+
+/**
+ * Holt zufällige Quiz-Fragen
+ */
+export function getRandomQuizQuestions(count: number): QuizQuestion[] {
+  return shuffleArray(QUIZ_QUESTIONS).slice(0, count);
+}
 
 // ============================================
 // WÜRDEST DU EHER? - Fragen

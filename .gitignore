@@ -31,3 +31,17 @@ coverage/
 # Misc
 *.tmp
 *.temp
+
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/captures/
+android/.externalNativeBuild/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Generated APKs served by server
+packages/server/public/

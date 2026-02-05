@@ -3,6 +3,7 @@
  */
 
 export * from './BaseGameEngine.js';
+export * from './QuizEngine.js';
 export * from './WouldYouRatherEngine.js';
 export * from './MostLikelyEngine.js';
 export * from './EitherOrEngine.js';

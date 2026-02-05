@@ -272,6 +272,18 @@ export const COSMETICS: CosmeticItem[] = [
     preview: '👨‍🚀',
     unlockCondition: { type: 'games_played', count: 100 },
   },
+  {
+    id: 'acc_monthly_crown',
+    name: 'Monatskrone',
+    category: 'accessory',
+    rarity: 'legendary',
+    preview: '👑',
+    unlockCondition: { type: 'special', code: 'monthly_winner' },
+    css: {
+      filter: 'drop-shadow(0 0 8px gold) drop-shadow(0 0 12px #FFD700)',
+      animation: 'crown-glow 2s ease-in-out infinite',
+    },
+  },
 
   // ============================================
   // EFFECTS - Partikel-Effekte

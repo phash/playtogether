@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Controller body -->
+    <path
+        android:fillColor="#4ECDC4"
+        android:pathData="M24,52 Q24,42 32,42 L76,42 Q84,42 84,52 L84,58 Q84,68 74,68 L66,68 Q62,68 60,64 L48,64 Q46,68 42,68 L34,68 Q24,68 24,58 Z"/>
+
+    <!-- Left D-pad horizontal -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,52 L42,52 L42,56 L30,56 Z"/>
+
+    <!-- Left D-pad vertical -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,48 L38,48 L38,60 L34,60 Z"/>
+
+    <!-- Right button top (red) -->
+    <path
+        android:fillColor="#FF6B6B"
+        android:pathData="M70,48 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0"/>
+
+    <!-- Right button right (yellow) -->
+    <path
+        android:fillColor="#FFEAA7"
+        android:pathData="M76,54 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0"/>
+
+    <!-- Right button bottom (teal) -->
+    <path
+        android:fillColor="#4ECDC4"
+        android:pathData="M70,60 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0"/>
+
+    <!-- Right button left (purple) -->
+    <path
+        android:fillColor="#DDA0DD"
+        android:pathData="M64,54 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0"/>
+
+    <!-- Sparkle 1 -->
+    <path
+        android:fillColor="#FFEAA7"
+        android:pathData="M28,32 L30,36 L34,36 L31,39 L32,43 L28,40 L24,43 L25,39 L22,36 L26,36 Z"/>
+
+    <!-- Sparkle 2 -->
+    <path
+        android:fillColor="#FFEAA7"
+        android:pathData="M82,30 L83.5,33 L87,33 L84.5,35.5 L85.5,39 L82,37 L78.5,39 L79.5,35.5 L77,33 L80.5,33 Z"/>
+
+    <!-- Sparkle 3 -->
+    <path
+        android:fillColor="#FFEAA7"
+        android:pathData="M78,72 L79,74 L81,74 L79.5,75.5 L80,78 L78,76.5 L76,78 L76.5,75.5 L75,74 L77,74 Z"/>
+</vector>

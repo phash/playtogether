@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1A1A2E"/>
+  <!-- Thinking person silhouette -->
+  <circle cx="256" cy="160" r="60" fill="#4ECDC4"/>
+  <!-- Body -->
+  <ellipse cx="256" cy="300" rx="80" ry="60" fill="#4ECDC4"/>
+  <!-- Thought bubbles -->
+  <circle cx="380" cy="120" r="15" fill="#FFEAA7"/>
+  <circle cx="410" cy="90" r="20" fill="#FFEAA7"/>
+  <!-- Main thought cloud -->
+  <g transform="translate(340, 30)">
+    <circle cx="40" cy="50" r="35" fill="#FF6B6B"/>
+    <circle cx="80" cy="40" r="30" fill="#FF6B6B"/>
+    <circle cx="60" cy="20" r="25" fill="#FF6B6B"/>
+    <text x="60" y="55" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">?</text>
+  </g>
+  <!-- Left option -->
+  <circle cx="140" cy="420" r="45" fill="#4ECDC4"/>
+  <text x="140" y="435" font-family="Arial, sans-serif" font-size="32" fill="white" text-anchor="middle">🏖️</text>
+  <!-- Right option -->
+  <circle cx="372" cy="420" r="45" fill="#FF6B6B"/>
+  <text x="372" y="435" font-family="Arial, sans-serif" font-size="32" fill="white" text-anchor="middle">🏔️</text>
+</svg>

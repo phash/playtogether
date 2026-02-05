@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A1A2E"/>
+      <stop offset="100%" style="stop-color:#16213E"/>
+    </linearGradient>
+    <linearGradient id="controllerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4"/>
+      <stop offset="100%" style="stop-color:#44A08D"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  <!-- Controller body -->
+  <path d="M100,280 Q100,200 180,200 L332,200 Q412,200 412,280 L412,320 Q412,380 350,380 L300,380 Q280,380 270,360 L242,360 Q232,380 212,380 L162,380 Q100,380 100,320 Z" fill="url(#controllerGrad)"/>
+  <!-- Left D-pad -->
+  <rect x="130" y="260" width="60" height="20" rx="5" fill="white"/>
+  <rect x="150" y="240" width="20" height="60" rx="5" fill="white"/>
+  <!-- Right buttons -->
+  <circle cx="340" cy="250" r="15" fill="#FF6B6B"/>
+  <circle cx="370" cy="280" r="15" fill="#FFEAA7"/>
+  <circle cx="340" cy="310" r="15" fill="#4ECDC4"/>
+  <circle cx="310" cy="280" r="15" fill="#DDA0DD"/>
+  <!-- Center glow effect -->
+  <circle cx="256" cy="280" r="25" fill="#FFEAA7" opacity="0.3"/>
+  <circle cx="256" cy="280" r="15" fill="#FFEAA7" opacity="0.5"/>
+  <!-- Sparkles -->
+  <g fill="#FFEAA7">
+    <polygon points="120,140 130,160 150,160 135,175 140,195 120,180 100,195 105,175 90,160 110,160"/>
+    <polygon points="400,120 408,135 425,135 413,147 417,165 400,152 383,165 387,147 375,135 392,135" transform="scale(0.8) translate(80,30)"/>
+    <polygon points="380,380 388,395 405,395 393,407 397,425 380,412 363,425 367,407 355,395 372,395" transform="scale(0.7) translate(120,-50)"/>
+  </g>
+  <!-- Play text -->
+  <text x="256" y="450" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">PLAY</text>
+</svg>

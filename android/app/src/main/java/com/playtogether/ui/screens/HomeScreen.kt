@@ -24,16 +24,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import com.playtogether.data.model.GameType
+import com.playtogether.data.repository.GameRepository
 import com.playtogether.ui.theme.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 /**
  * HomeScreen ViewModel
  */
 @HiltViewModel
-class HomeViewModel @javax.inject.Inject constructor(
-    private val repository: com.playtogether.data.repository.GameRepository
-) : androidx.lifecycle.ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val repository: GameRepository
+) : ViewModel() {
 
     val connectionState = repository.connectionState
     val room = repository.room

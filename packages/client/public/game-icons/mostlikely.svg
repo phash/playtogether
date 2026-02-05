@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1A1A2E"/>
+  <!-- Three player heads -->
+  <circle cx="150" cy="200" r="50" fill="#4ECDC4"/>
+  <circle cx="256" cy="180" r="55" fill="#FF6B6B"/>
+  <circle cx="362" cy="200" r="50" fill="#FFEAA7"/>
+  <!-- Bodies -->
+  <ellipse cx="150" cy="300" rx="45" ry="35" fill="#4ECDC4"/>
+  <ellipse cx="256" cy="290" rx="50" ry="40" fill="#FF6B6B"/>
+  <ellipse cx="362" cy="300" rx="45" ry="35" fill="#FFEAA7"/>
+  <!-- Pointing hand to middle person -->
+  <g fill="#FFEAA7">
+    <path d="M100,400 L180,350 L190,365 L130,400 L190,435 L180,450 Z"/>
+    <path d="M412,400 L332,350 L322,365 L382,400 L322,435 L332,450 Z"/>
+  </g>
+  <!-- Crown on middle person -->
+  <path d="M206,120 L226,150 L256,130 L286,150 L306,120 L296,160 L216,160 Z" fill="#FFEAA7"/>
+</svg>

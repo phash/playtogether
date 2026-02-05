@@ -2,14 +2,14 @@
  * Moody Routes - API for Moody avatar management
  */
 
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { moodyService } from '../services/MoodyService.js';
 import { requireAuth } from '../middleware/auth.js';
 import type { MoodLevel, CosmeticCategory } from '@playtogether/shared';
 import { MOOD_LEVELS, COSMETICS_BY_CATEGORY } from '@playtogether/shared';
 
-const router = Router();
+const router: RouterType = Router();
 
 // All routes require authentication
 router.use(requireAuth);

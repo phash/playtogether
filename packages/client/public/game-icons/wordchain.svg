@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1A1A2E"/>
+  <!-- Chain links with letters -->
+  <g transform="translate(100, 150)">
+    <!-- First link -->
+    <ellipse cx="60" cy="60" rx="55" ry="35" fill="none" stroke="#4ECDC4" stroke-width="12"/>
+    <text x="60" y="72" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#4ECDC4" text-anchor="middle">CAT</text>
+  </g>
+  <g transform="translate(180, 210)">
+    <!-- Second link (overlapping) -->
+    <ellipse cx="60" cy="60" rx="55" ry="35" fill="none" stroke="#FF6B6B" stroke-width="12"/>
+    <text x="60" y="72" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FF6B6B" text-anchor="middle">TEA</text>
+  </g>
+  <g transform="translate(260, 270)">
+    <!-- Third link -->
+    <ellipse cx="60" cy="60" rx="55" ry="35" fill="none" stroke="#FFEAA7" stroke-width="12"/>
+    <text x="60" y="72" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#FFEAA7" text-anchor="middle">ANT</text>
+  </g>
+</svg>

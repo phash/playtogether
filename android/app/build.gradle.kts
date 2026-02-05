@@ -37,8 +37,8 @@ android {
         }
         debug {
             isMinifyEnabled = false
-            // Für Android Emulator: 10.0.2.2 ist localhost des Host-Rechners
-            buildConfigField("String", "SERVER_URL", "\"http://10.0.2.2:3000\"")
+            // Lokales Netzwerk - IP anpassen falls nötig
+            buildConfigField("String", "SERVER_URL", "\"http://192.168.178.20:3002\"")
         }
     }
 

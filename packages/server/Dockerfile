@@ -21,8 +21,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/server/node_modules ./packages/server/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/package.json ./
 
 # Copy source files
 COPY tsconfig.base.json ./
@@ -53,6 +52,9 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/server/package.json ./packages/server/
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 COPY --from=builder /app/package.json ./
+
+# Copy public directory (APK download)
+COPY --from=builder /app/packages/server/public ./packages/server/public
 
 # Copy Prisma files
 COPY --from=builder /app/packages/server/prisma ./packages/server/prisma

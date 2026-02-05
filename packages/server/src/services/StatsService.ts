@@ -7,6 +7,7 @@ import type { GameSession, GameParticipant, UserStats } from '@prisma/client';
 import type { GameType } from '@playtogether/shared';
 import { MOODY_CONFIG } from '@playtogether/shared';
 import { moodyService } from './MoodyService.js';
+import { monthlyScoreService } from './MonthlyScoreService.js';
 
 export interface GameResult {
   userId: string;
@@ -114,6 +115,10 @@ export class StatsService {
         await moodyService.addXp(result.userId, xp);
       })
     );
+
+    // Record monthly scores
+    const playerIds = results.map((r) => r.userId);
+    await monthlyScoreService.recordGamePlayed(playerIds, winnerId);
   }
 
   /**
