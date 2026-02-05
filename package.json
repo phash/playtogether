@@ -1,0 +1,27 @@
+{
+  "name": "playtogether",
+  "version": "1.0.0",
+  "description": "Multiplayer-Plattform für kleine Spiele auf Smartphones",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "games/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm -w @playtogether/server run dev",
+    "dev:client": "npm -w @playtogether/client run dev",
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "build:shared": "npm -w @playtogether/shared run build",
+    "build:server": "npm -w @playtogether/server run build",
+    "build:client": "npm -w @playtogether/client run build",
+    "start": "npm -w @playtogether/server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

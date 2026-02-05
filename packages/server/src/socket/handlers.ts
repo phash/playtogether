@@ -1,0 +1,314 @@
+/**
+ * Socket.io Event Handler
+ */
+
+import { Server, Socket } from 'socket.io';
+import { RoomManager } from '../rooms/RoomManager.js';
+import type {
+  ClientMessage,
+  ServerMessage,
+  ErrorCodes,
+} from '@playtogether/shared';
+
+interface SocketData {
+  playerId?: string;
+  roomId?: string;
+}
+
+export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
+  io.on('connection', (socket: Socket) => {
+    console.log(`🔌 Neue Verbindung: ${socket.id}`);
+
+    const socketData: SocketData = {};
+
+    // Hilfsfunktion zum Senden von Nachrichten
+    const send = (message: ServerMessage) => {
+      socket.emit('message', message);
+    };
+
+    const sendError = (code: string, message: string) => {
+      send({ type: 'error', payload: { code, message } });
+    };
+
+    const broadcastToRoom = (roomId: string, message: ServerMessage) => {
+      io.to(roomId).emit('message', message);
+    };
+
+    // Nachricht vom Client verarbeiten
+    socket.on('message', (message: ClientMessage) => {
+      try {
+        handleMessage(message);
+      } catch (error) {
+        console.error('Fehler bei Nachrichtenverarbeitung:', error);
+        sendError('INTERNAL_ERROR', 'Ein Fehler ist aufgetreten');
+      }
+    });
+
+    function handleMessage(message: ClientMessage) {
+      switch (message.type) {
+        case 'create_room':
+          handleCreateRoom(message.payload);
+          break;
+        case 'join_room':
+          handleJoinRoom(message.payload);
+          break;
+        case 'leave_room':
+          handleLeaveRoom();
+          break;
+        case 'set_ready':
+          handleSetReady(message.payload);
+          break;
+        case 'start_game':
+          handleStartGame();
+          break;
+        case 'game_action':
+          handleGameAction(message.payload);
+          break;
+        case 'update_settings':
+          handleUpdateSettings(message.payload);
+          break;
+        default:
+          sendError('INVALID_ACTION', 'Unbekannte Aktion');
+      }
+    }
+
+    function handleCreateRoom(payload: {
+      playerName: string;
+      gameType: any;
+      settings?: any;
+    }) {
+      try {
+        const { room, playerId } = roomManager.createRoom(
+          payload.playerName,
+          payload.gameType,
+          payload.settings
+        );
+
+        socketData.playerId = playerId;
+        socketData.roomId = room.id;
+
+        // Socket dem Raum hinzufügen
+        socket.join(room.id);
+
+        send({
+          type: 'room_created',
+          payload: {
+            room: roomManager.getRoomState(room),
+            playerId,
+          },
+        });
+      } catch (error) {
+        sendError('ROOM_CREATE_FAILED', (error as Error).message);
+      }
+    }
+
+    function handleJoinRoom(payload: { code: string; playerName: string }) {
+      try {
+        const result = roomManager.joinRoom(
+          payload.code.toUpperCase(),
+          payload.playerName
+        );
+
+        if (!result) {
+          sendError('ROOM_NOT_FOUND', 'Raum nicht gefunden');
+          return;
+        }
+
+        const { room, playerId } = result;
+
+        socketData.playerId = playerId;
+        socketData.roomId = room.id;
+
+        // Socket dem Raum hinzufügen
+        socket.join(room.id);
+
+        // Dem neuen Spieler die Rauminformationen senden
+        send({
+          type: 'room_joined',
+          payload: {
+            room: roomManager.getRoomState(room),
+            playerId,
+          },
+        });
+
+        // Anderen Spielern mitteilen
+        const player = room.players.get(playerId)!;
+        socket.to(room.id).emit('message', {
+          type: 'player_joined',
+          payload: {
+            player: {
+              id: player.id,
+              name: player.name,
+              avatarColor: player.avatarColor,
+              isHost: player.isHost,
+              score: player.score,
+              isReady: false,
+            },
+          },
+        });
+      } catch (error) {
+        sendError('JOIN_FAILED', (error as Error).message);
+      }
+    }
+
+    function handleLeaveRoom() {
+      if (!socketData.playerId || !socketData.roomId) return;
+
+      const result = roomManager.leaveRoom(socketData.playerId);
+
+      if (result) {
+        // Anderen Spielern mitteilen
+        broadcastToRoom(socketData.roomId, {
+          type: 'player_left',
+          payload: {
+            playerId: socketData.playerId,
+            newHostId: result.newHostId,
+          },
+        });
+      }
+
+      socket.leave(socketData.roomId);
+      socketData.playerId = undefined;
+      socketData.roomId = undefined;
+    }
+
+    function handleSetReady(payload: { ready: boolean }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const room = roomManager.getRoom(socketData.roomId);
+      if (!room) return;
+
+      const player = room.players.get(socketData.playerId);
+      if (!player) return;
+
+      // Player-Update an alle senden
+      broadcastToRoom(socketData.roomId, {
+        type: 'player_updated',
+        payload: {
+          player: {
+            id: player.id,
+            name: player.name,
+            avatarColor: player.avatarColor,
+            isHost: player.isHost,
+            score: player.score,
+            isReady: payload.ready,
+          },
+        },
+      });
+    }
+
+    function handleStartGame() {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const room = roomManager.getRoom(socketData.roomId);
+      if (!room) return;
+
+      // Nur Host kann starten
+      if (room.hostId !== socketData.playerId) {
+        sendError('NOT_HOST', 'Nur der Host kann das Spiel starten');
+        return;
+      }
+
+      // Mindestspielerzahl prüfen
+      if (room.players.size < room.minPlayers) {
+        sendError(
+          'NOT_ENOUGH_PLAYERS',
+          `Mindestens ${room.minPlayers} Spieler benötigt`
+        );
+        return;
+      }
+
+      // Countdown starten
+      roomManager.updateRoomStatus(socketData.roomId, 'starting');
+
+      broadcastToRoom(socketData.roomId, {
+        type: 'game_starting',
+        payload: { countdown: 3 },
+      });
+
+      // Nach Countdown das Spiel starten
+      setTimeout(() => {
+        if (!socketData.roomId) return;
+        roomManager.updateRoomStatus(socketData.roomId, 'playing');
+
+        // Initiales Spielstate senden
+        broadcastToRoom(socketData.roomId, {
+          type: 'game_state',
+          payload: {
+            state: {
+              type: room.gameType,
+              currentRound: 1,
+              totalRounds: room.settings.roundCount,
+              phase: 'active',
+              timeRemaining: room.settings.timePerRound,
+              scores: Object.fromEntries(
+                [...room.players.keys()].map((id) => [id, 0])
+              ),
+            },
+          },
+        });
+      }, 3000);
+    }
+
+    function handleGameAction(payload: { action: string; data: unknown }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      // Spielspezifische Aktionen hier verarbeiten
+      // Diese werden später von den Spielmodulen übernommen
+      console.log(
+        `🎮 Spielaktion von ${socketData.playerId}: ${payload.action}`
+      );
+    }
+
+    function handleUpdateSettings(payload: any) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const room = roomManager.getRoom(socketData.roomId);
+      if (!room) return;
+
+      // Nur Host kann Einstellungen ändern
+      if (room.hostId !== socketData.playerId) {
+        sendError('NOT_HOST', 'Nur der Host kann Einstellungen ändern');
+        return;
+      }
+
+      // Einstellungen aktualisieren
+      room.settings = { ...room.settings, ...payload };
+
+      // Allen Spielern mitteilen
+      broadcastToRoom(socketData.roomId, {
+        type: 'room_updated',
+        payload: {
+          room: roomManager.getRoomState(room),
+        },
+      });
+    }
+
+    // Verbindung getrennt
+    socket.on('disconnect', () => {
+      console.log(`🔌 Verbindung getrennt: ${socket.id}`);
+
+      if (socketData.playerId && socketData.roomId) {
+        const result = roomManager.leaveRoom(socketData.playerId);
+
+        if (result) {
+          broadcastToRoom(socketData.roomId, {
+            type: 'player_left',
+            payload: {
+              playerId: socketData.playerId,
+              newHostId: result.newHostId,
+            },
+          });
+        }
+      }
+    });
+  });
+
+  // Periodische Aufräumarbeiten
+  setInterval(() => {
+    const stats = roomManager.getStats();
+    console.log(
+      `📊 Stats: ${stats.totalRooms} Räume, ${stats.totalPlayers} Spieler`
+    );
+  }, 60000);
+}
