@@ -24,6 +24,7 @@ android {
 
         // Server URL - kann in verschiedenen Build-Varianten überschrieben werden
         buildConfigField("String", "SERVER_URL", "\"http://10.0.2.2:3000\"")
+        buildConfigField("String", "CLIENT_URL", "\"http://10.0.2.2:8090\"")
     }
 
     buildTypes {
@@ -34,11 +35,13 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "SERVER_URL", "\"https://api.playtogether.app\"")
+            buildConfigField("String", "CLIENT_URL", "\"https://playtogether.app\"")
         }
         debug {
             isMinifyEnabled = false
             // Lokales Netzwerk - IP anpassen falls nötig
             buildConfigField("String", "SERVER_URL", "\"http://192.168.178.20:3003\"")
+            buildConfigField("String", "CLIENT_URL", "\"http://192.168.178.20:8090\"")
         }
     }
 

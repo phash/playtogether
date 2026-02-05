@@ -1,5 +1,6 @@
 package com.playtogether.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.playtogether.BuildConfig
 import com.playtogether.data.model.GameType
 import com.playtogether.data.model.Player
 import com.playtogether.data.repository.GameRepository
@@ -65,6 +69,7 @@ fun LobbyScreen(
     val room by viewModel.room.collectAsState()
     val playerId by viewModel.playerId.collectAsState()
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     var isReady by remember { mutableStateOf(false) }
 
@@ -154,16 +159,36 @@ fun LobbyScreen(
                             color = Primary
                         )
                     }
-                    IconButton(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(currentRoom.code))
+                    Row {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(currentRoom.code))
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                contentDescription = "Kopieren",
+                                tint = TextSecondary
+                            )
                         }
-                    ) {
-                        Icon(
-                            Icons.Default.ContentCopy,
-                            contentDescription = "Kopieren",
-                            tint = TextSecondary
-                        )
+                        IconButton(
+                            onClick = {
+                                val gameName = gameType?.displayName ?: currentRoom.gameType
+                                val url = "${BuildConfig.CLIENT_URL}/?join=${currentRoom.code}"
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, "PlayTogether")
+                                    putExtra(Intent.EXTRA_TEXT, "Spiel mit mir $gameName! Code: ${currentRoom.code}\n$url")
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Code teilen"))
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "Teilen",
+                                tint = Primary
+                            )
+                        }
                     }
                 }
             }

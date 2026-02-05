@@ -25,11 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.playtogether.BuildConfig
 import com.playtogether.data.model.GameType
 import com.playtogether.data.repository.GameRepository
+import com.playtogether.data.repository.UserPreferencesRepository
 import com.playtogether.ui.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -37,7 +40,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: GameRepository
+    private val repository: GameRepository,
+    private val userPreferences: UserPreferencesRepository
 ) : ViewModel() {
 
     val connectionState = repository.connectionState
@@ -52,6 +56,22 @@ class HomeViewModel @Inject constructor(
 
     init {
         repository.connect()
+        viewModelScope.launch {
+            userPreferences.playerName.collect { savedName ->
+                if (savedName.isNotBlank() && playerName.isBlank()) {
+                    playerName = savedName
+                }
+            }
+        }
+    }
+
+    fun updatePlayerName(name: String) {
+        playerName = name
+        if (name.isNotBlank()) {
+            viewModelScope.launch {
+                userPreferences.savePlayerName(name)
+            }
+        }
     }
 
     fun createRoom() {
@@ -138,7 +158,7 @@ fun HomeScreen(
             // Player Name Input
             OutlinedTextField(
                 value = viewModel.playerName,
-                onValueChange = { viewModel.playerName = it },
+                onValueChange = { viewModel.updatePlayerName(it) },
                 label = { Text("Dein Name") },
                 placeholder = { Text("Name eingeben...") },
                 singleLine = true,

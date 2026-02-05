@@ -22,6 +22,7 @@ COPY --from=deps /app/package.json ./
 
 # Copy source files
 COPY tsconfig.base.json ./
+COPY version.json ./
 COPY packages/shared ./packages/shared
 COPY packages/client ./packages/client
 

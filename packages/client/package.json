@@ -1,6 +1,6 @@
 {
   "name": "@playtogether/client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PlayTogether Mobile Web Client",
   "type": "module",
   "scripts": {

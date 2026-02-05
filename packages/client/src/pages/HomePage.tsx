@@ -2,11 +2,10 @@
  * HomePage - Startseite zum Erstellen/Beitreten von Spielen
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { AVAILABLE_GAMES, type GameType } from '@playtogether/shared';
-import { useEffect } from 'react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -21,10 +20,21 @@ export default function HomePage() {
     joinRoom,
   } = useGameStore();
 
-  const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const joinParam = searchParams.get('join');
+
+  const [mode, setMode] = useState<'menu' | 'create' | 'join'>(joinParam ? 'join' : 'menu');
   const [selectedGame, setSelectedGame] = useState<GameType>('quiz');
-  const [joinCode, setJoinCode] = useState('');
+  const [joinCode, setJoinCode] = useState(joinParam?.toUpperCase() ?? '');
   const [localName, setLocalName] = useState(playerName);
+
+  // Clean join parameter from URL after reading
+  useEffect(() => {
+    if (joinParam) {
+      searchParams.delete('join');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
 
   // Navigation wenn Raum erstellt/beigetreten
   useEffect(() => {
@@ -79,7 +89,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container fade-in" style={{ paddingTop: '2rem' }}>
+    <div className="container fade-in" style={{ paddingTop: '2rem', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Logo */}
       <div className="text-center mb-4">
         <div style={{ fontSize: '4rem' }}>🎮</div>
@@ -226,6 +236,14 @@ export default function HomePage() {
           </button>
         </div>
       )}
+
+      {/* Version Footer */}
+      <div
+        className="text-center text-secondary"
+        style={{ marginTop: 'auto', paddingTop: '2rem', fontSize: '0.75rem', opacity: 0.6 }}
+      >
+        v{__APP_VERSION__}
+      </div>
     </div>
   );
 }
