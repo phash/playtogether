@@ -118,15 +118,7 @@ model UserStats {
   moodChanges       Int @default(0)
 
   // Game-specific stats (stored as JSON for flexibility)
-  quizCorrectAnswers   Int @default(0)
-  quizTotalAnswers     Int @default(0)
-  quizFastestAnswerMs  Int?
-
-  drawingGamesPlayed   Int @default(0)
-  drawingsGuessedCorrectly Int @default(0)
-
-  reactionBestTimeMs   Int?
-  reactionGamesWon     Int @default(0)
+  gameSpecificStats    Json?
 
   @@index([userId])
 }
@@ -169,6 +161,22 @@ model UserAchievement {
 // GAME SESSIONS & HISTORY
 // ===========================================
 
+model GameScore {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+
+  gameSessionId String
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  userId        String
+  round         Int
+  basePoints    Int      @default(0)
+  speedBonus    Float    @default(1.0)
+  totalPoints   Int      @default(0)
+
+  @@index([gameSessionId])
+  @@index([userId])
+}
+
 model GameSession {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -176,13 +184,16 @@ model GameSession {
 
   // Room info
   roomCode  String
-  gameType  String   // quiz, drawing, wordguess, reaction
+  gameType  String   // anagramme, quiz_champ, entweder_oder, gluecksrad, tic_tac_toe, rock_paper_scissors, hangman
 
   // Settings snapshot
   settings  Json
 
   // Participants
   participants GameParticipant[]
+
+  // Per-round scores
+  scores    GameScore[]
 
   // Game result
   winnerId  String?

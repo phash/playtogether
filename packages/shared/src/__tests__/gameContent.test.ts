@@ -4,175 +4,128 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  WOULD_YOU_RATHER_QUESTIONS,
-  MOST_LIKELY_QUESTIONS,
-  EITHER_OR_QUESTIONS,
-  WORD_CHAIN_START_WORDS,
-  GERMAN_WORD_LIST,
-  ANAGRAM_PUZZLES,
-  isValidGermanWord,
-  isValidWordChainWord,
-  canFormWord,
-  getRandomAnagramPuzzle,
+  QUIZ_CHAMP_QUESTIONS,
+  ENTWEDER_ODER_QUESTIONS,
+  WORD_LIST,
+  GLUECKSRAD_PHRASES,
   shuffleArray,
   getRandomQuestions,
+  getRandomWords,
+  scrambleWord,
 } from '../data/gameContent.js';
 
-describe('Spielinhalte - Fragen', () => {
-  describe('WOULD_YOU_RATHER_QUESTIONS', () => {
-    it('sollte Fragen enthalten', () => {
-      expect(WOULD_YOU_RATHER_QUESTIONS.length).toBeGreaterThan(0);
-    });
-
-    it('sollte gültige Struktur haben', () => {
-      for (const question of WOULD_YOU_RATHER_QUESTIONS) {
-        expect(question.id).toBeDefined();
-        expect(question.optionA).toBeDefined();
-        expect(question.optionB).toBeDefined();
-        expect(question.category).toBeDefined();
-      }
-    });
-
-    it('sollte eindeutige IDs haben', () => {
-      const ids = WOULD_YOU_RATHER_QUESTIONS.map((q) => q.id);
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(ids.length);
-    });
+describe('Quiz Champ Fragen', () => {
+  it('sollte mindestens 100 Fragen enthalten', () => {
+    expect(QUIZ_CHAMP_QUESTIONS.length).toBeGreaterThanOrEqual(100);
   });
 
-  describe('MOST_LIKELY_QUESTIONS', () => {
-    it('sollte Fragen enthalten', () => {
-      expect(MOST_LIKELY_QUESTIONS.length).toBeGreaterThan(0);
-    });
-
-    it('sollte gültige Struktur haben', () => {
-      for (const question of MOST_LIKELY_QUESTIONS) {
-        expect(question.id).toBeDefined();
-        expect(question.question).toBeDefined();
-        expect(question.category).toBeDefined();
-      }
-    });
+  it('sollte gültige Struktur haben', () => {
+    for (const q of QUIZ_CHAMP_QUESTIONS) {
+      expect(q.id).toBeDefined();
+      expect(q.question).toBeDefined();
+      expect(q.options).toHaveLength(4);
+      expect(q.correctIndex).toBeGreaterThanOrEqual(0);
+      expect(q.correctIndex).toBeLessThanOrEqual(3);
+      expect(q.category).toBeDefined();
+      expect(q.difficulty).toBeDefined();
+    }
   });
 
-  describe('EITHER_OR_QUESTIONS', () => {
-    it('sollte Fragen enthalten', () => {
-      expect(EITHER_OR_QUESTIONS.length).toBeGreaterThan(0);
-    });
+  it('sollte eindeutige IDs haben', () => {
+    const ids = QUIZ_CHAMP_QUESTIONS.map((q) => q.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+  });
 
-    it('sollte verschiedene Kategorien haben', () => {
-      const categories = new Set(EITHER_OR_QUESTIONS.map((q) => q.category));
-      expect(categories.size).toBeGreaterThan(1);
-    });
+  it('sollte verschiedene Kategorien haben', () => {
+    const categories = new Set(QUIZ_CHAMP_QUESTIONS.map((q) => q.category));
+    expect(categories.size).toBeGreaterThan(3);
+  });
+
+  it('sollte verschiedene Schwierigkeitsgrade haben', () => {
+    const difficulties = new Set(QUIZ_CHAMP_QUESTIONS.map((q) => q.difficulty));
+    expect(difficulties.has('easy')).toBe(true);
+    expect(difficulties.has('medium')).toBe(true);
+    expect(difficulties.has('hard')).toBe(true);
   });
 });
 
-describe('Wortkette', () => {
-  describe('WORD_CHAIN_START_WORDS', () => {
-    it('sollte Startwörter enthalten', () => {
-      expect(WORD_CHAIN_START_WORDS.length).toBeGreaterThan(0);
-    });
-
-    it('sollte alle mit Großbuchstaben beginnen', () => {
-      for (const word of WORD_CHAIN_START_WORDS) {
-        expect(word[0]).toBe(word[0].toUpperCase());
-      }
-    });
+describe('Entweder/Oder Fragen', () => {
+  it('sollte mindestens 50 Fragen enthalten', () => {
+    expect(ENTWEDER_ODER_QUESTIONS.length).toBeGreaterThanOrEqual(50);
   });
 
-  describe('GERMAN_WORD_LIST', () => {
-    it('sollte Wörter enthalten', () => {
-      expect(GERMAN_WORD_LIST.size).toBeGreaterThan(0);
-    });
-
-    it('sollte alle Wörter kleingeschrieben haben', () => {
-      for (const word of GERMAN_WORD_LIST) {
-        expect(word).toBe(word.toLowerCase());
-      }
-    });
+  it('sollte gültige Struktur haben', () => {
+    for (const q of ENTWEDER_ODER_QUESTIONS) {
+      expect(q.id).toBeDefined();
+      expect(q.optionA).toBeDefined();
+      expect(q.optionB).toBeDefined();
+      expect(q.category).toBeDefined();
+    }
   });
 
-  describe('isValidGermanWord', () => {
-    it('sollte gültige Wörter erkennen', () => {
-      expect(isValidGermanWord('apfel')).toBe(true);
-      expect(isValidGermanWord('APFEL')).toBe(true);
-      expect(isValidGermanWord('Apfel')).toBe(true);
-    });
-
-    it('sollte ungültige Wörter ablehnen', () => {
-      expect(isValidGermanWord('xyz')).toBe(false);
-      expect(isValidGermanWord('qwerty')).toBe(false);
-    });
+  it('sollte eindeutige IDs haben', () => {
+    const ids = ENTWEDER_ODER_QUESTIONS.map((q) => q.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
   });
 
-  describe('isValidWordChainWord', () => {
-    it('sollte gültige Wortketten-Wörter akzeptieren', () => {
-      expect(isValidWordChainWord('lampe', 'l')).toBe(true);
-      expect(isValidWordChainWord('engel', 'e')).toBe(true);
-    });
-
-    it('sollte Wörter mit falschem Anfangsbuchstaben ablehnen', () => {
-      expect(isValidWordChainWord('lampe', 'a')).toBe(false);
-      expect(isValidWordChainWord('baum', 'a')).toBe(false);
-    });
-
-    it('sollte zu kurze Wörter ablehnen', () => {
-      expect(isValidWordChainWord('a', 'a')).toBe(false);
-    });
-
-    it('sollte ungültige Wörter ablehnen', () => {
-      expect(isValidWordChainWord('xyz', 'x')).toBe(false);
-    });
+  it('sollte verschiedene Kategorien haben', () => {
+    const categories = new Set(ENTWEDER_ODER_QUESTIONS.map((q) => q.category));
+    expect(categories.size).toBeGreaterThan(3);
   });
 });
 
-describe('Anagramme', () => {
-  describe('ANAGRAM_PUZZLES', () => {
-    it('sollte Puzzles enthalten', () => {
-      expect(ANAGRAM_PUZZLES.length).toBeGreaterThan(0);
-    });
-
-    it('sollte gültige Struktur haben', () => {
-      for (const puzzle of ANAGRAM_PUZZLES) {
-        expect(puzzle.letters).toBeDefined();
-        expect(puzzle.letters.length).toBeGreaterThan(0);
-        expect(puzzle.validWords).toBeDefined();
-        expect(puzzle.validWords.length).toBeGreaterThan(0);
-        expect(puzzle.bonusWord).toBeDefined();
-      }
-    });
-
-    it('sollte Bonuswort in validWords enthalten', () => {
-      for (const puzzle of ANAGRAM_PUZZLES) {
-        expect(puzzle.validWords).toContain(puzzle.bonusWord);
-      }
-    });
+describe('Wortliste', () => {
+  it('sollte mindestens 100 Wörter enthalten', () => {
+    expect(WORD_LIST.length).toBeGreaterThanOrEqual(100);
   });
 
-  describe('canFormWord', () => {
-    it('sollte gültige Wörter erkennen', () => {
-      expect(canFormWord('reis', ['R', 'E', 'I', 'S', 'E', 'N'])).toBe(true);
-      expect(canFormWord('reise', ['R', 'E', 'I', 'S', 'E', 'N'])).toBe(true);
-      expect(canFormWord('reisen', ['R', 'E', 'I', 'S', 'E', 'N'])).toBe(true);
-    });
-
-    it('sollte ungültige Wörter ablehnen', () => {
-      expect(canFormWord('reisen', ['R', 'E', 'I', 'S'])).toBe(false);
-      expect(canFormWord('xxx', ['R', 'E', 'I', 'S', 'E', 'N'])).toBe(false);
-    });
-
-    it('sollte Buchstaben nur einmal verwenden', () => {
-      expect(canFormWord('ee', ['E'])).toBe(false);
-      expect(canFormWord('ee', ['E', 'E'])).toBe(true);
-    });
+  it('sollte gültige Struktur haben', () => {
+    for (const entry of WORD_LIST) {
+      expect(entry.word).toBeDefined();
+      expect(entry.word.length).toBeGreaterThan(2);
+      expect(entry.category).toBeDefined();
+      expect(['easy', 'medium', 'hard']).toContain(entry.difficulty);
+    }
   });
 
-  describe('getRandomAnagramPuzzle', () => {
-    it('sollte ein Puzzle zurückgeben', () => {
-      const puzzle = getRandomAnagramPuzzle();
-      expect(puzzle).toBeDefined();
-      expect(puzzle.letters).toBeDefined();
-      expect(puzzle.validWords).toBeDefined();
-    });
+  it('sollte keine doppelten Wörter haben', () => {
+    const words = WORD_LIST.map((w) => w.word.toLowerCase());
+    const uniqueWords = new Set(words);
+    expect(uniqueWords.size).toBe(words.length);
+  });
+
+  it('sollte verschiedene Schwierigkeitsgrade haben', () => {
+    const difficulties = new Set(WORD_LIST.map((w) => w.difficulty));
+    expect(difficulties.has('easy')).toBe(true);
+    expect(difficulties.has('medium')).toBe(true);
+    expect(difficulties.has('hard')).toBe(true);
+  });
+});
+
+describe('Glücksrad Phrasen', () => {
+  it('sollte mindestens 50 Phrasen enthalten', () => {
+    expect(GLUECKSRAD_PHRASES.length).toBeGreaterThanOrEqual(50);
+  });
+
+  it('sollte gültige Struktur haben', () => {
+    for (const p of GLUECKSRAD_PHRASES) {
+      expect(p.phrase).toBeDefined();
+      expect(p.phrase.length).toBeGreaterThan(3);
+      expect(p.category).toBeDefined();
+    }
+  });
+
+  it('sollte verschiedene Kategorien haben', () => {
+    const categories = new Set(GLUECKSRAD_PHRASES.map((p) => p.category));
+    expect(categories.size).toBeGreaterThan(3);
+  });
+
+  it('sollte Phrasen in Großbuchstaben haben', () => {
+    for (const p of GLUECKSRAD_PHRASES) {
+      expect(p.phrase).toBe(p.phrase.toUpperCase());
+    }
   });
 });
 
@@ -202,24 +155,67 @@ describe('Hilfsfunktionen', () => {
 
   describe('getRandomQuestions', () => {
     it('sollte richtige Anzahl zurückgeben', () => {
-      const questions = getRandomQuestions(WOULD_YOU_RATHER_QUESTIONS, 5);
+      const questions = getRandomQuestions(QUIZ_CHAMP_QUESTIONS, 5);
       expect(questions.length).toBe(5);
     });
 
     it('sollte nicht mehr als verfügbar zurückgeben', () => {
-      const questions = getRandomQuestions(WOULD_YOU_RATHER_QUESTIONS, 1000);
-      expect(questions.length).toBe(WOULD_YOU_RATHER_QUESTIONS.length);
+      const questions = getRandomQuestions(QUIZ_CHAMP_QUESTIONS, 10000);
+      expect(questions.length).toBe(QUIZ_CHAMP_QUESTIONS.length);
     });
 
     it('sollte verschiedene Elemente bei mehrfachem Aufruf zurückgeben können', () => {
-      // Teste ob mindestens einmal verschiedene Ergebnisse kommen
       const results = new Set<string>();
       for (let i = 0; i < 10; i++) {
-        const questions = getRandomQuestions(WOULD_YOU_RATHER_QUESTIONS, 3);
+        const questions = getRandomQuestions(QUIZ_CHAMP_QUESTIONS, 3);
         results.add(questions.map((q) => q.id).join(','));
       }
-      // Bei genug Durchläufen sollten verschiedene Kombinationen kommen
       expect(results.size).toBeGreaterThan(1);
+    });
+  });
+
+  describe('getRandomWords', () => {
+    it('sollte richtige Anzahl zurückgeben', () => {
+      const words = getRandomWords(5);
+      expect(words.length).toBe(5);
+    });
+
+    it('sollte gültige WordEntry-Objekte zurückgeben', () => {
+      const words = getRandomWords(3);
+      for (const w of words) {
+        expect(w.word).toBeDefined();
+        expect(w.category).toBeDefined();
+        expect(w.difficulty).toBeDefined();
+      }
+    });
+  });
+
+  describe('scrambleWord', () => {
+    it('sollte gleiche Buchstaben enthalten', () => {
+      const word = 'Apfel';
+      const scrambled = scrambleWord(word);
+      const sortedOriginal = word.toUpperCase().split('').sort().join('');
+      const sortedScrambled = scrambled.split('').sort().join('');
+      expect(sortedScrambled).toBe(sortedOriginal);
+    });
+
+    it('sollte Großbuchstaben zurückgeben', () => {
+      const scrambled = scrambleWord('hallo');
+      expect(scrambled).toBe(scrambled.toUpperCase());
+    });
+
+    it('sollte bei langen Wörtern eine andere Reihenfolge liefern', () => {
+      // Bei kurzen Wörtern könnte zufällig die gleiche Reihenfolge rauskommen
+      const word = 'Schmetterling';
+      let different = false;
+      for (let i = 0; i < 20; i++) {
+        const scrambled = scrambleWord(word);
+        if (scrambled !== word.toUpperCase()) {
+          different = true;
+          break;
+        }
+      }
+      expect(different).toBe(true);
     });
   });
 });

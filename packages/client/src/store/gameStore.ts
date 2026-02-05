@@ -12,7 +12,20 @@ import type {
   ServerMessage,
   GameType,
   RoomSettings,
+  PlaylistItem,
 } from '@playtogether/shared';
+
+interface IntermissionData {
+  rankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+  nextGame?: { type: GameType; name: string; icon: string };
+  currentPlaylistIndex: number;
+  totalPlaylistItems: number;
+  countdownSeconds: number;
+}
+
+interface PlaylistEndedData {
+  finalRankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+}
 
 interface GameStore {
   // Connection
@@ -34,6 +47,11 @@ interface GameStore {
   // Game
   gameState: GameState | null;
   countdown: number | null;
+  timerValue: number | null;
+
+  // Playlist
+  intermissionData: IntermissionData | null;
+  playlistEndedData: PlaylistEndedData | null;
 
   // Actions
   createRoom: (gameType: GameType, settings?: Partial<RoomSettings>) => void;
@@ -43,6 +61,7 @@ interface GameStore {
   startGame: () => void;
   sendGameAction: (action: string, data: unknown) => void;
   updateSettings: (settings: Partial<RoomSettings>) => void;
+  updatePlaylist: (playlist: PlaylistItem[]) => void;
 }
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -57,6 +76,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   error: null,
   gameState: null,
   countdown: null,
+  timerValue: null,
+  intermissionData: null,
+  playlistEndedData: null,
 
   connect: () => {
     if (get().socket) return;
@@ -132,7 +154,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const message: ClientMessage = { type: 'leave_room' };
     socket.emit('message', message);
-    set({ room: null, playerId: null, gameState: null });
+    set({ room: null, playerId: null, gameState: null, intermissionData: null, playlistEndedData: null, timerValue: null });
   },
 
   setReady: (ready: boolean) => {
@@ -175,6 +197,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     socket.emit('message', message);
   },
+
+  updatePlaylist: (playlist: PlaylistItem[]) => {
+    const { socket } = get();
+    if (!socket) return;
+
+    const message: ClientMessage = {
+      type: 'playlist_update',
+      payload: { playlist },
+    };
+    socket.emit('message', message);
+  },
 }));
 
 function handleServerMessage(
@@ -189,6 +222,8 @@ function handleServerMessage(
         room: message.payload.room,
         playerId: message.payload.playerId,
         error: null,
+        intermissionData: null,
+        playlistEndedData: null,
       });
       break;
 
@@ -216,7 +251,6 @@ function handleServerMessage(
           (p) => p.id !== message.payload.playerId
         );
 
-        // Host aktualisieren falls nötig
         if (message.payload.newHostId) {
           const hostIndex = updatedPlayers.findIndex(
             (p) => p.id === message.payload.newHostId
@@ -256,8 +290,7 @@ function handleServerMessage(
     }
 
     case 'game_starting':
-      set({ countdown: message.payload.countdown });
-      // Countdown runter zählen
+      set({ countdown: message.payload.countdown, intermissionData: null, playlistEndedData: null });
       const countdownInterval = setInterval(() => {
         const current = get().countdown;
         if (current && current > 1) {
@@ -270,19 +303,63 @@ function handleServerMessage(
       break;
 
     case 'game_state':
-      set({ gameState: message.payload.state, countdown: null });
-      // Room Status aktualisieren
-      const { room } = get();
-      if (room) {
-        set({ room: { ...room, status: 'playing' } });
+      set({ gameState: message.payload.state, countdown: null, intermissionData: null });
+      {
+        const { room } = get();
+        if (room && room.status !== 'playing') {
+          set({ room: { ...room, status: 'playing' } });
+        }
       }
       break;
 
     case 'game_ended':
-      set({ gameState: null });
-      const currentRoom = get().room;
-      if (currentRoom) {
-        set({ room: { ...currentRoom, status: 'finished' } });
+      set({ gameState: null, timerValue: null });
+      {
+        const currentRoom = get().room;
+        if (currentRoom) {
+          set({ room: { ...currentRoom, status: 'finished' } });
+        }
+      }
+      break;
+
+    case 'timer_tick':
+      set({ timerValue: message.payload.timeRemaining });
+      break;
+
+    case 'answer_result':
+      // Individual answer feedback - can be used by game components
+      break;
+
+    case 'answer_confirmed':
+      // Player answer confirmed
+      break;
+
+    case 'intermission':
+      set({
+        intermissionData: message.payload,
+        gameState: null,
+        timerValue: null,
+      });
+      {
+        const currentRoom = get().room;
+        if (currentRoom) {
+          set({ room: { ...currentRoom, status: 'intermission' } });
+        }
+      }
+      break;
+
+    case 'playlist_ended':
+      set({
+        playlistEndedData: message.payload,
+        intermissionData: null,
+        gameState: null,
+        timerValue: null,
+      });
+      {
+        const currentRoom = get().room;
+        if (currentRoom) {
+          set({ room: { ...currentRoom, status: 'finished' } });
+        }
       }
       break;
 
@@ -291,7 +368,7 @@ function handleServerMessage(
       console.error('Server error:', message.payload);
       break;
 
-    // Moody-Nachrichten - werden lazy importiert um zirkuläre Abhängigkeiten zu vermeiden
+    // Moody-Nachrichten
     case 'moody_updated': {
       import('./moodyStore').then(({ useMoodyStore }) => {
         useMoodyStore.getState().setPlayerMood(

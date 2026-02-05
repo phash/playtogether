@@ -6,28 +6,100 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { getGameInfo } from '@playtogether/shared';
-import QuizGame from '../games/QuizGame';
-import WouldYouRatherGame from '../games/WouldYouRatherGame';
-import MostLikelyGame from '../games/MostLikelyGame';
-import EitherOrGame from '../games/EitherOrGame';
-import WordChainGame from '../games/WordChainGame';
-import AnagramGame from '../games/AnagramGame';
+import AnagrammeGame from '../games/AnagrammeGame';
+import QuizChampGame from '../games/QuizChampGame';
+import EntwederOderGame from '../games/EntwederOderGame';
+import GluecksradGame from '../games/GluecksradGame';
+import TicTacToeGame from '../games/TicTacToeGame';
+import RockPaperScissorsGame from '../games/RockPaperScissorsGame';
+import HangmanGame from '../games/HangmanGame';
+import IntermissionScreen from '../components/IntermissionScreen';
 
 export default function GamePage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { room, gameState, playerId, leaveRoom } = useGameStore();
+  const { room, gameState, playerId, leaveRoom, intermissionData, playlistEndedData } = useGameStore();
 
-  // Redirect wenn kein Raum oder Spiel
+  // Redirect wenn kein Raum
   useEffect(() => {
     if (!room) {
       navigate('/');
-    } else if (room.status === 'finished') {
+    } else if (room.status === 'finished' && !playlistEndedData) {
       navigate(`/lobby/${code}`);
     }
-  }, [room, navigate, code]);
+  }, [room, navigate, code, playlistEndedData]);
 
-  if (!room || !gameState) {
+  if (!room) {
+    return (
+      <div className="container" style={{ paddingTop: '4rem' }}>
+        <div className="loading">
+          <div className="spinner" />
+          <p className="mt-2 text-secondary">Lade Spiel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Playlist ended - final results
+  if (playlistEndedData) {
+    const { finalRankings } = playlistEndedData;
+    const winner = finalRankings[0];
+    const isWinner = winner?.playerId === playerId;
+
+    return (
+      <div className="container fade-in" style={{ paddingTop: '2rem' }}>
+        <div className="text-center mb-3">
+          <div style={{ fontSize: '4rem' }}>{isWinner ? '🏆' : '🎮'}</div>
+          <h1 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>
+            {isWinner ? 'Du hast gewonnen!' : 'Playlist beendet!'}
+          </h1>
+        </div>
+
+        <div className="card mb-3">
+          <h3 className="mb-2" style={{ textAlign: 'center' }}>Endergebnis</h3>
+          {finalRankings.map((entry) => {
+            const medals = ['🥇', '🥈', '🥉'];
+            const isMe = entry.playerId === playerId;
+            return (
+              <div
+                key={entry.playerId}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.75rem',
+                  background: isMe ? 'var(--primary-light)' : 'var(--surface-light)',
+                  borderRadius: 'var(--radius)',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <span>
+                  {medals[entry.rank - 1] || `${entry.rank}.`} {entry.playerName}
+                  {isMe && ' (Du)'}
+                </span>
+                <span style={{ fontWeight: 'bold' }}>{entry.score} Punkte</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate(`/lobby/${code}`)}
+        >
+          Zurück zur Lobby
+        </button>
+      </div>
+    );
+  }
+
+  // Intermission between playlist games
+  if (intermissionData) {
+    return <IntermissionScreen />;
+  }
+
+  // Waiting for game state
+  if (!gameState) {
     return (
       <div className="container" style={{ paddingTop: '4rem' }}>
         <div className="loading">
@@ -45,31 +117,28 @@ export default function GamePage() {
     navigate('/');
   };
 
-  // Spiel-Komponente basierend auf Spieltyp rendern
   const renderGame = () => {
     switch (room.gameType) {
-      case 'quiz':
-        return <QuizGame />;
-      case 'drawing':
-        return <PlaceholderGame name="Kritzel & Rate" icon="🎨" />;
-      case 'wordguess':
-        return <PlaceholderGame name="Wort-Raten" icon="💬" />;
-      case 'reaction':
-        return <PlaceholderGame name="Reaktions-Test" icon="⚡" />;
-      // Party & Spaß
-      case 'wouldyourather':
-        return <WouldYouRatherGame />;
-      case 'mostlikely':
-        return <MostLikelyGame />;
-      case 'eitheror':
-        return <EitherOrGame />;
-      // Wort-Spiele
-      case 'wordchain':
-        return <WordChainGame />;
-      case 'anagram':
-        return <AnagramGame />;
+      case 'anagramme':
+        return <AnagrammeGame />;
+      case 'quiz_champ':
+        return <QuizChampGame />;
+      case 'entweder_oder':
+        return <EntwederOderGame />;
+      case 'gluecksrad':
+        return <GluecksradGame />;
+      case 'tic_tac_toe':
+        return <TicTacToeGame />;
+      case 'rock_paper_scissors':
+        return <RockPaperScissorsGame />;
+      case 'hangman':
+        return <HangmanGame />;
       default:
-        return <PlaceholderGame name="Unbekannt" icon="❓" />;
+        return (
+          <div className="card text-center" style={{ marginTop: '2rem', padding: '3rem' }}>
+            <h2>Unbekanntes Spiel</h2>
+          </div>
+        );
     }
   };
 
@@ -94,6 +163,11 @@ export default function GamePage() {
           <span className="text-secondary">
             Runde {gameState.currentRound}/{gameState.totalRounds}
           </span>
+          {room.playlist.length > 1 && (
+            <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
+              Spiel {room.currentPlaylistIndex + 1}/{room.playlist.length}
+            </span>
+          )}
           <button
             onClick={handleLeave}
             style={{
@@ -161,22 +235,6 @@ export default function GamePage() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-// Platzhalter für noch nicht implementierte Spiele
-function PlaceholderGame({ name, icon }: { name: string; icon: string }) {
-  return (
-    <div
-      className="card text-center"
-      style={{ marginTop: '2rem', padding: '3rem' }}
-    >
-      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{icon}</div>
-      <h2>{name}</h2>
-      <p className="text-secondary mt-2">
-        Dieses Spiel wird bald verfügbar sein!
-      </p>
     </div>
   );
 }

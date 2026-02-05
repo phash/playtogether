@@ -16,6 +16,7 @@ import {
   generateRoomId,
   generatePlayerId,
   getRandomAvatarColor,
+  PlaylistItem,
 } from '@playtogether/shared';
 
 export class RoomManager {
@@ -29,7 +30,8 @@ export class RoomManager {
   createRoom(
     hostName: string,
     gameType: GameType,
-    settings?: Partial<RoomSettings>
+    settings?: Partial<RoomSettings>,
+    playlist?: PlaylistItem[]
   ): { room: Room; playerId: string } {
     const gameInfo = getGameInfo(gameType);
     if (!gameInfo) {
@@ -50,6 +52,15 @@ export class RoomManager {
       joinedAt: Date.now(),
     };
 
+    const roomSettings = { ...DEFAULT_ROOM_SETTINGS, ...settings };
+
+    // Default playlist: single game with room settings
+    const defaultPlaylist: PlaylistItem[] = playlist || [{
+      gameType,
+      roundCount: roomSettings.roundCount,
+      timePerRound: roomSettings.timePerRound,
+    }];
+
     const room: Room = {
       id: roomId,
       code,
@@ -60,7 +71,9 @@ export class RoomManager {
       maxPlayers: gameInfo.maxPlayers,
       minPlayers: gameInfo.minPlayers,
       createdAt: Date.now(),
-      settings: { ...DEFAULT_ROOM_SETTINGS, ...settings },
+      settings: roomSettings,
+      playlist: defaultPlaylist,
+      currentPlaylistIndex: 0,
     };
 
     this.rooms.set(roomId, room);
@@ -225,7 +238,7 @@ export class RoomManager {
       avatarColor: p.avatarColor,
       isHost: p.isHost,
       score: p.score,
-      isReady: false, // TODO: Ready-State implementieren
+      isReady: false,
     }));
 
     return {
@@ -238,6 +251,8 @@ export class RoomManager {
       maxPlayers: room.maxPlayers,
       minPlayers: room.minPlayers,
       settings: room.settings,
+      playlist: room.playlist,
+      currentPlaylistIndex: room.currentPlaylistIndex,
     };
   }
 

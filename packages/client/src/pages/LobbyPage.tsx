@@ -21,7 +21,7 @@ export default function LobbyPage() {
 
   // Redirect zu Spiel wenn es losgeht
   useEffect(() => {
-    if (room?.status === 'playing') {
+    if (room?.status === 'playing' || room?.status === 'intermission') {
       navigate(`/game/${code}`);
     }
   }, [room?.status, code, navigate]);
@@ -109,9 +109,41 @@ export default function LobbyPage() {
           onClick={handleShare}
           style={{ fontSize: '0.9rem' }}
         >
-          📤 Code teilen
+          Code teilen
         </button>
       </div>
+
+      {/* Playlist Preview */}
+      {room.playlist.length > 1 && (
+        <div className="card mb-3">
+          <h2 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Playlist</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {room.playlist.map((item, index) => {
+              const info = getGameInfo(item.gameType);
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'var(--surface-light)',
+                    borderRadius: 'var(--radius)',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>{info?.icon}</span>
+                  <span style={{ flex: 1 }}>{info?.name}</span>
+                  <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
+                    {item.roundCount} Runden
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Players */}
       <div className="card mb-3">
@@ -142,7 +174,7 @@ export default function LobbyPage() {
                 {player.name}
                 {player.id === playerId && ' (Du)'}
               </span>
-              {player.isHost && <span className="player-badge">👑 Host</span>}
+              {player.isHost && <span className="player-badge">Host</span>}
             </div>
           ))}
 
@@ -178,8 +210,8 @@ export default function LobbyPage() {
             disabled={!canStart}
           >
             {canStart
-              ? '🚀 Spiel starten'
-              : `⏳ Noch ${room.minPlayers - room.players.length} Spieler benötigt`}
+              ? 'Spiel starten'
+              : `Noch ${room.minPlayers - room.players.length} Spieler benötigt`}
           </button>
         </>
       ) : (
@@ -187,7 +219,7 @@ export default function LobbyPage() {
           className="card text-center"
           style={{ background: 'rgba(99, 102, 241, 0.1)' }}
         >
-          <p>⏳ Warte auf Host...</p>
+          <p>Warte auf Host...</p>
         </div>
       )}
 
@@ -196,7 +228,7 @@ export default function LobbyPage() {
         onClick={handleLeave}
         style={{ marginTop: '1rem' }}
       >
-        🚪 Raum verlassen
+        Raum verlassen
       </button>
     </div>
   );

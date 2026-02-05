@@ -4,17 +4,13 @@
 
 // Verfügbare Spieltypen
 export type GameType =
-  | 'quiz'
-  | 'drawing'
-  | 'wordguess'
-  | 'reaction'
-  // Party & Spaß
-  | 'wouldyourather'
-  | 'mostlikely'
-  | 'eitheror'
-  // Wort-Spiele
-  | 'wordchain'
-  | 'anagram';
+  | 'anagramme'
+  | 'quiz_champ'
+  | 'entweder_oder'
+  | 'gluecksrad'
+  | 'tic_tac_toe'
+  | 'rock_paper_scissors'
+  | 'hangman';
 
 export interface GameInfo {
   type: GameType;
@@ -24,94 +20,92 @@ export interface GameInfo {
   maxPlayers: number;
   icon: string;
   category: 'classic' | 'party' | 'word';
+  defaultRounds: number;
+  defaultTime: number;
 }
 
 export const AVAILABLE_GAMES: GameInfo[] = [
   // Klassische Spiele
   {
-    type: 'quiz',
-    name: 'Quiz Battle',
-    description: 'Beantworte Fragen schneller als deine Freunde!',
+    type: 'quiz_champ',
+    name: 'Quiz Champ',
+    description: 'Beantworte Fragen schneller als deine Freunde! Streak-Bonus!',
     minPlayers: 2,
     maxPlayers: 8,
-    icon: '❓',
+    icon: '🧠',
     category: 'classic',
+    defaultRounds: 10,
+    defaultTime: 20,
   },
   {
-    type: 'drawing',
-    name: 'Kritzel & Rate',
-    description: 'Zeichne und errate, was andere gezeichnet haben!',
-    minPlayers: 3,
-    maxPlayers: 10,
-    icon: '🎨',
-    category: 'classic',
-  },
-  {
-    type: 'wordguess',
-    name: 'Wort-Raten',
-    description: 'Erkläre Wörter ohne sie zu benutzen!',
-    minPlayers: 4,
-    maxPlayers: 12,
-    icon: '💬',
-    category: 'classic',
-  },
-  {
-    type: 'reaction',
-    name: 'Reaktions-Test',
-    description: 'Wer hat die schnellsten Reflexe?',
+    type: 'tic_tac_toe',
+    name: 'Tic Tac Toe',
+    description: 'Das klassische Strategiespiel - im Turniermodus!',
     minPlayers: 2,
     maxPlayers: 8,
-    icon: '⚡',
+    icon: '❌',
     category: 'classic',
+    defaultRounds: 3,
+    defaultTime: 10,
+  },
+  {
+    type: 'rock_paper_scissors',
+    name: 'Schere Stein Papier',
+    description: 'Turnier-Paarungen - wer gewinnt?',
+    minPlayers: 2,
+    maxPlayers: 16,
+    icon: '✊',
+    category: 'classic',
+    defaultRounds: 3,
+    defaultTime: 5,
   },
 
-  // Party & Spaß
+  // Party & Spass
   {
-    type: 'wouldyourather',
-    name: 'Würdest du eher?',
-    description: 'Wähle zwischen zwei Optionen und sieh, was andere denken!',
-    minPlayers: 2,
-    maxPlayers: 12,
-    icon: '🤔',
-    category: 'party',
-  },
-  {
-    type: 'mostlikely',
-    name: 'Wer würde am ehesten?',
-    description: 'Stimmt ab, wer aus der Gruppe am ehesten etwas tun würde!',
-    minPlayers: 3,
-    maxPlayers: 10,
-    icon: '👆',
-    category: 'party',
-  },
-  {
-    type: 'eitheror',
+    type: 'entweder_oder',
     name: 'Entweder/Oder',
-    description: 'Schnelle Entscheidungen - Pizza oder Burger?',
-    minPlayers: 2,
+    description: 'Was wählt die Mehrheit? Stimme ab!',
+    minPlayers: 3,
     maxPlayers: 20,
     icon: '⚖️',
     category: 'party',
+    defaultRounds: 10,
+    defaultTime: 15,
+  },
+  {
+    type: 'gluecksrad',
+    name: 'Glücksrad',
+    description: 'Drehe das Rad und löse die Phrase!',
+    minPlayers: 2,
+    maxPlayers: 6,
+    icon: '🎡',
+    category: 'party',
+    defaultRounds: 3,
+    defaultTime: 90,
   },
 
   // Wort-Spiele
   {
-    type: 'wordchain',
-    name: 'Wortkette',
-    description: 'Der letzte Buchstabe wird zum ersten des nächsten Worts!',
-    minPlayers: 2,
-    maxPlayers: 8,
-    icon: '🔗',
-    category: 'word',
-  },
-  {
-    type: 'anagram',
+    type: 'anagramme',
     name: 'Anagramme',
-    description: 'Bilde so viele Wörter wie möglich aus den Buchstaben!',
+    description: 'Entwirre das verwürfelte Wort!',
     minPlayers: 2,
     maxPlayers: 8,
     icon: '🔤',
     category: 'word',
+    defaultRounds: 8,
+    defaultTime: 30,
+  },
+  {
+    type: 'hangman',
+    name: 'Galgenmännchen',
+    description: 'Errate das Wort Buchstabe für Buchstabe!',
+    minPlayers: 2,
+    maxPlayers: 8,
+    icon: '💀',
+    category: 'word',
+    defaultRounds: 5,
+    defaultTime: 60,
   },
 ];
 
@@ -135,149 +129,172 @@ export interface GameState {
 
 export type GamePhase = 'preparation' | 'active' | 'reveal' | 'scores' | 'end';
 
-// Quiz-spezifische Typen
-export interface QuizQuestion {
+// ============================================
+// SCORING
+// ============================================
+
+/**
+ * Berechnet Speed-Bonus (1.0 - 2.0x Multiplikator)
+ * Je schneller, desto höher der Bonus
+ */
+export function calculateSpeedBonus(timeLeftMs: number, maxTimeMs: number): number {
+  if (maxTimeMs <= 0) return 1.0;
+  const ratio = Math.max(0, Math.min(1, timeLeftMs / maxTimeMs));
+  return 1.0 + ratio; // 1.0 (letzte Sekunde) bis 2.0 (sofort)
+}
+
+// ============================================
+// ANAGRAMME
+// ============================================
+
+export interface AnagrammeGameState extends GameState {
+  type: 'anagramme';
+  scrambledWord: string;
+  wordLength: number;
+  category: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  attempts: Record<string, string[]>; // playerId -> attempted words
+  solved: Record<string, boolean>; // playerId -> solved?
+  revealedWord?: string; // shown in reveal phase
+}
+
+// ============================================
+// QUIZ CHAMP
+// ============================================
+
+export interface QuizChampQuestion {
   id: string;
   question: string;
-  answers: string[];
+  options: string[];
   correctIndex: number;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  // Feedback statistics (optional, nur für Server)
-  thumbsUp?: number;
-  thumbsDown?: number;
 }
 
-export interface QuizFeedback {
-  questionId: string;
-  playerId: string;
-  isPositive: boolean; // true = thumbs up, false = thumbs down
-}
-
-export interface QuizGameState extends GameState {
-  type: 'quiz';
-  currentQuestion?: QuizQuestion;
+export interface QuizChampGameState extends GameState {
+  type: 'quiz_champ';
+  currentQuestion?: QuizChampQuestion;
   playerAnswers: Record<string, number | null>;
   questionStartTime: number;
-  // Feedback für aktuelle Frage
-  questionFeedback: Record<string, boolean | null>; // playerId -> true/false/null
-  // Antwortzeiten für Scoring
-  answerTimes: Record<string, number>; // playerId -> ms since question start
-  // Zeigt die korrekte Antwort an (in reveal phase)
+  streaks: Record<string, number>; // playerId -> consecutive correct answers
+  answerResults: Record<string, { correct: boolean; points: number }>;
   showCorrectAnswer?: boolean;
   correctAnswerIndex?: number;
 }
 
-export interface QuizAnswer {
-  playerId: string;
-  answerIndex: number;
-  answeredAt: number;
-}
-
-// Quiz-Konfiguration
-export const QUIZ_CONFIG = {
-  QUESTIONS_PER_ROUND: 9,
-  TIME_PER_QUESTION: 20, // Sekunden
-  POINTS_CORRECT: 100,
-  POINTS_SPEED_BONUS_MAX: 50, // Bonus für schnelle Antworten
-  REVEAL_TIME: 3, // Sekunden für Ergebnis-Anzeige
-} as const;
-
 // ============================================
-// WÜRDEST DU EHER? (Would You Rather)
+// ENTWEDER/ODER
 // ============================================
 
-export interface WouldYouRatherQuestion {
+export interface EntwederOderQuestion {
   id: string;
   optionA: string;
   optionB: string;
-  category: 'funny' | 'deep' | 'gross' | 'lifestyle';
+  category: string;
 }
 
-export interface WouldYouRatherGameState extends GameState {
-  type: 'wouldyourather';
-  currentQuestion?: WouldYouRatherQuestion;
+export interface EntwederOderGameState extends GameState {
+  type: 'entweder_oder';
+  currentQuestion?: EntwederOderQuestion;
   votes: Record<string, 'A' | 'B' | null>;
   votingComplete: boolean;
-  results?: { a: number; b: number };
+  results?: { a: number; b: number; total: number; percentA: number; percentB: number };
 }
 
 // ============================================
-// WER WÜRDE AM EHESTEN? (Most Likely To)
+// GLÜCKSRAD
 // ============================================
 
-export interface MostLikelyQuestion {
-  id: string;
-  question: string; // "Wer würde am ehesten...?"
-  category: 'funny' | 'embarrassing' | 'talent' | 'lifestyle';
-}
+export type GluecksradSpinResult = 'bankrott' | 'freidrehen' | number; // number = Betrag
 
-export interface MostLikelyGameState extends GameState {
-  type: 'mostlikely';
-  currentQuestion?: MostLikelyQuestion;
-  votes: Record<string, string | null>; // userId -> votedForPlayerId
-  votingComplete: boolean;
-  results?: Record<string, number>; // playerId -> vote count
-}
-
-// ============================================
-// ENTWEDER/ODER (Either/Or)
-// ============================================
-
-export interface EitherOrQuestion {
-  id: string;
-  optionA: string;
-  optionB: string;
-  category: 'food' | 'lifestyle' | 'travel' | 'entertainment';
-}
-
-export interface EitherOrGameState extends GameState {
-  type: 'eitheror';
-  currentQuestion?: EitherOrQuestion;
-  votes: Record<string, 'A' | 'B' | null>;
-  streak: number; // Consecutive questions
-  speedRound: boolean;
-}
-
-// ============================================
-// WORTKETTE (Word Chain)
-// ============================================
-
-export interface WordChainGameState extends GameState {
-  type: 'wordchain';
-  currentWord: string;
-  currentPlayerIndex: number;
+export interface GluecksradGameState extends GameState {
+  type: 'gluecksrad';
+  phrase: string; // With unrevealed letters as _
+  category: string;
+  revealedLetters: string[];
   currentPlayerId: string;
   playerOrder: string[];
-  usedWords: string[];
-  lastLetter: string;
-  turnTimeLimit: number;
-  eliminatedPlayers: string[];
-}
-
-export interface WordChainSubmission {
-  playerId: string;
-  word: string;
-  timestamp: number;
+  currentPlayerIndex: number;
+  lastSpinResult?: GluecksradSpinResult;
+  roundMoney: Record<string, number>; // Money this round (per player)
+  canSpin: boolean;
+  canGuessLetter: boolean;
+  canSolve: boolean;
+  canBuyVowel: boolean;
+  wrongGuesses: number;
+  solved: boolean;
+  solvedBy?: string;
 }
 
 // ============================================
-// ANAGRAMME (Anagram)
+// TIC TAC TOE
 // ============================================
 
-export interface AnagramGameState extends GameState {
-  type: 'anagram';
-  letters: string[];
-  foundWords: Record<string, string[]>; // playerId -> words found
-  allValidWords: string[]; // All possible words (hidden from clients)
-  minWordLength: number;
-  bonusWord?: string; // Longest possible word for bonus
+export interface TicTacToeMatch {
+  player1: string;
+  player2: string;
+  board: (string | null)[]; // 9 cells, null = empty, playerId = taken
+  currentTurn: string;
+  winner?: string | null; // null = draw
+  finished: boolean;
 }
 
-export interface AnagramSubmission {
-  playerId: string;
-  word: string;
-  timestamp: number;
+export interface TicTacToeGameState extends GameState {
+  type: 'tic_tac_toe';
+  mode: '1v1' | 'tournament';
+  matches: TicTacToeMatch[];
+  currentMatchIndex: number;
+  bracket?: string[][]; // tournament bracket
+  tournamentRound: number;
+  eliminated: string[];
+}
+
+// ============================================
+// SCHERE STEIN PAPIER
+// ============================================
+
+export type RPSChoice = 'rock' | 'paper' | 'scissors';
+
+export interface RPSMatch {
+  player1: string;
+  player2: string;
+  choices: Record<string, RPSChoice | null>;
+  winner?: string | null; // null = draw
+  round: number;
+  maxRounds: number; // 1 or 3 (best-of-3)
+  scores: Record<string, number>;
+  finished: boolean;
+}
+
+export interface RockPaperScissorsGameState extends GameState {
+  type: 'rock_paper_scissors';
+  matches: RPSMatch[];
+  currentMatchIndex: number;
+  bracket?: string[][];
+  tournamentRound: number;
+  eliminated: string[];
+  bestOf: 1 | 3;
+  bye?: string; // player with bye (odd player count)
+}
+
+// ============================================
+// HANGMAN (Galgenmännchen)
+// ============================================
+
+export interface HangmanGameState extends GameState {
+  type: 'hangman';
+  wordDisplay: string; // e.g. "_ A _ _ E"
+  wordLength: number;
+  category: string;
+  guessedLetters: string[];
+  correctLetters: string[];
+  wrongLetters: string[];
+  wrongCount: number;
+  maxWrong: number; // 8
+  letterGuessedBy: Record<string, string>; // letter -> playerId who guessed it first
+  solved: boolean;
+  solvedBy?: string;
+  revealedWord?: string;
 }
 
 // ============================================
@@ -285,9 +302,10 @@ export interface AnagramSubmission {
 // ============================================
 
 export type AnyGameState =
-  | QuizGameState
-  | WouldYouRatherGameState
-  | MostLikelyGameState
-  | EitherOrGameState
-  | WordChainGameState
-  | AnagramGameState;
+  | AnagrammeGameState
+  | QuizChampGameState
+  | EntwederOderGameState
+  | GluecksradGameState
+  | TicTacToeGameState
+  | RockPaperScissorsGameState
+  | HangmanGameState;

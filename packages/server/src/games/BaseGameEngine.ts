@@ -3,6 +3,7 @@
  */
 
 import type { GameType, GamePhase, AnyGameState } from '@playtogether/shared';
+import { calculateSpeedBonus } from '@playtogether/shared';
 
 export interface GameEngineConfig {
   roomId: string;
@@ -29,7 +30,9 @@ export abstract class BaseGameEngine {
   protected phase: GamePhase = 'preparation';
   protected scores: Map<string, number> = new Map();
   protected timers: NodeJS.Timeout[] = [];
+  protected intervals: NodeJS.Timeout[] = [];
   protected onEvent: GameEventCallback;
+  protected roundStartTime: number = 0;
 
   constructor(config: GameEngineConfig, onEvent: GameEventCallback) {
     this.roomId = config.roomId;
@@ -43,39 +46,22 @@ export abstract class BaseGameEngine {
     }
   }
 
-  /**
-   * Startet das Spiel
-   */
   abstract start(): void;
-
-  /**
-   * Verarbeitet eine Spielaktion
-   */
   abstract handleAction(action: GameAction): void;
-
-  /**
-   * Gibt den aktuellen Spielzustand zurück
-   */
   abstract getState(): AnyGameState;
-
-  /**
-   * Gibt den Spieltyp zurück
-   */
   abstract getGameType(): GameType;
 
-  /**
-   * Beendet das Spiel und räumt auf
-   */
   destroy(): void {
     for (const timer of this.timers) {
       clearTimeout(timer);
     }
+    for (const interval of this.intervals) {
+      clearInterval(interval);
+    }
     this.timers = [];
+    this.intervals = [];
   }
 
-  /**
-   * Startet einen Timer
-   */
   protected startTimer(callback: () => void, delay: number): NodeJS.Timeout {
     const timer = setTimeout(callback, delay);
     this.timers.push(timer);
@@ -83,30 +69,65 @@ export abstract class BaseGameEngine {
   }
 
   /**
-   * Fügt Punkte hinzu
+   * Startet einen Server-Timer mit timer:tick Events jede Sekunde
    */
+  protected startCountdownTimer(durationSeconds: number, onExpire: () => void): void {
+    this.roundStartTime = Date.now();
+    let remaining = durationSeconds;
+
+    // Emit initial tick
+    this.emit('timer_tick', { timeRemaining: remaining });
+
+    const interval = setInterval(() => {
+      remaining--;
+      this.emit('timer_tick', { timeRemaining: Math.max(0, remaining) });
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        this.intervals = this.intervals.filter(i => i !== interval);
+        onExpire();
+      }
+    }, 1000);
+
+    this.intervals.push(interval);
+  }
+
+  protected clearAllTimers(): void {
+    for (const timer of this.timers) {
+      clearTimeout(timer);
+    }
+    for (const interval of this.intervals) {
+      clearInterval(interval);
+    }
+    this.timers = [];
+    this.intervals = [];
+  }
+
+  /**
+   * Berechnet Speed-Score: basePoints * speedBonus
+   */
+  protected calculateSpeedScore(basePoints: number, timeLeftMs: number, maxTimeMs: number): number {
+    const bonus = calculateSpeedBonus(timeLeftMs, maxTimeMs);
+    return Math.round(basePoints * bonus);
+  }
+
   protected addScore(playerId: string, points: number): void {
     const current = this.scores.get(playerId) || 0;
     this.scores.set(playerId, current + points);
   }
 
-  /**
-   * Gibt die Scores als Object zurück
-   */
   protected getScoresObject(): Record<string, number> {
     return Object.fromEntries(this.scores);
   }
 
-  /**
-   * Sendet ein Event an alle Spieler
-   */
   protected emit(event: string, data: unknown): void {
     this.onEvent(event, data);
   }
 
-  /**
-   * Startet die nächste Runde oder beendet das Spiel
-   */
+  protected emitGameState(): void {
+    this.emit('game_state', { state: this.getState() });
+  }
+
   protected nextRound(): void {
     this.currentRound++;
 
@@ -117,25 +138,18 @@ export abstract class BaseGameEngine {
     }
   }
 
-  /**
-   * Startet eine einzelne Runde
-   */
   protected abstract startRound(): void;
 
-  /**
-   * Beendet das Spiel
-   */
   protected endGame(): void {
     this.phase = 'end';
+    this.clearAllTimers();
+    this.emitGameState();
     this.emit('game_ended', {
       finalScores: this.getScoresObject(),
       winner: this.getWinner(),
     });
   }
 
-  /**
-   * Ermittelt den Gewinner
-   */
   protected getWinner(): string | null {
     let maxScore = -1;
     let winner: string | null = null;
@@ -148,5 +162,14 @@ export abstract class BaseGameEngine {
     }
 
     return winner;
+  }
+
+  /**
+   * Gibt die verbleibende Zeit seit Rundenstart in ms zurück
+   */
+  protected getTimeLeftMs(): number {
+    const elapsed = Date.now() - this.roundStartTime;
+    const maxMs = this.settings.timePerRound * 1000;
+    return Math.max(0, maxMs - elapsed);
   }
 }

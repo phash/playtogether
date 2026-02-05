@@ -8,25 +8,27 @@ import {
   GameEngineConfig,
   GameEventCallback,
 } from './BaseGameEngine.js';
-import { WouldYouRatherEngine } from './WouldYouRatherEngine.js';
-import { MostLikelyEngine } from './MostLikelyEngine.js';
-import { EitherOrEngine } from './EitherOrEngine.js';
-import { WordChainEngine } from './WordChainEngine.js';
-import { AnagramEngine } from './AnagramEngine.js';
-import { QuizEngine } from './QuizEngine.js';
+import { AnagrammeEngine } from './AnagrammeEngine.js';
+import { QuizChampEngine } from './QuizChampEngine.js';
+import { EntwederOderEngine } from './EntwederOderEngine.js';
+import { HangmanEngine } from './HangmanEngine.js';
+import { GluecksradEngine } from './GluecksradEngine.js';
+import { TicTacToeEngine } from './TicTacToeEngine.js';
+import { RockPaperScissorsEngine } from './RockPaperScissorsEngine.js';
 
 type GameEngineConstructor = new (
   config: GameEngineConfig,
   onEvent: GameEventCallback
 ) => BaseGameEngine;
 
-const GAME_ENGINES: Partial<Record<GameType, GameEngineConstructor>> = {
-  quiz: QuizEngine,
-  wouldyourather: WouldYouRatherEngine,
-  mostlikely: MostLikelyEngine,
-  eitheror: EitherOrEngine,
-  wordchain: WordChainEngine,
-  anagram: AnagramEngine,
+const GAME_ENGINES: Record<GameType, GameEngineConstructor> = {
+  anagramme: AnagrammeEngine,
+  quiz_champ: QuizChampEngine,
+  entweder_oder: EntwederOderEngine,
+  hangman: HangmanEngine,
+  gluecksrad: GluecksradEngine,
+  tic_tac_toe: TicTacToeEngine,
+  rock_paper_scissors: RockPaperScissorsEngine,
 };
 
 export class GameManager {
@@ -59,6 +61,37 @@ export class GameManager {
     this.activeGames.set(room.id, engine);
 
     console.log(`🎮 Spiel erstellt: ${room.gameType} für Raum ${room.code}`);
+
+    return engine;
+  }
+
+  /**
+   * Erstellt ein Spiel mit spezifischen Einstellungen (für Playlist)
+   */
+  createGameWithSettings(
+    roomId: string,
+    gameType: GameType,
+    playerIds: string[],
+    settings: { roundCount: number; timePerRound: number },
+    onEvent: GameEventCallback
+  ): BaseGameEngine | null {
+    const EngineClass = GAME_ENGINES[gameType];
+
+    if (!EngineClass) {
+      console.warn(`Keine Engine für Spieltyp: ${gameType}`);
+      return null;
+    }
+
+    const config: GameEngineConfig = {
+      roomId,
+      playerIds,
+      settings,
+    };
+
+    const engine = new EngineClass(config, onEvent);
+    this.activeGames.set(roomId, engine);
+
+    console.log(`🎮 Spiel erstellt: ${gameType} für Raum ${roomId}`);
 
     return engine;
   }

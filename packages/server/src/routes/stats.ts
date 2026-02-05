@@ -104,9 +104,7 @@ router.get('/summary', requireAuth, async (req, res) => {
       ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
       : 0;
 
-    const quizAccuracy = stats.quizTotalAnswers > 0
-      ? Math.round((stats.quizCorrectAnswers / stats.quizTotalAnswers) * 100)
-      : 0;
+    const gameSpecific = (stats.gameSpecificStats as Record<string, any>) || {};
 
     res.json({
       overview: {
@@ -119,16 +117,7 @@ router.get('/summary', requireAuth, async (req, res) => {
         reactionsSent: stats.reactionsSent,
         reactionsReceived: stats.reactionsReceived,
       },
-      quiz: {
-        correctAnswers: stats.quizCorrectAnswers,
-        totalAnswers: stats.quizTotalAnswers,
-        accuracy: quizAccuracy,
-        fastestAnswerMs: stats.quizFastestAnswerMs,
-      },
-      reaction: {
-        gamesWon: stats.reactionGamesWon,
-        bestTimeMs: stats.reactionBestTimeMs,
-      },
+      gameSpecificStats: gameSpecific,
     });
   } catch (error) {
     console.error('Get summary error:', error);

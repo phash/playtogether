@@ -18,13 +18,14 @@ data class Player(
 /**
  * Spieltypen
  */
-enum class GameType(val id: String, val displayName: String, val icon: String) {
-    QUIZ("quiz", "Quiz", "🧠"),
-    WOULD_YOU_RATHER("wouldyourather", "Würdest du eher?", "🤔"),
-    MOST_LIKELY("mostlikely", "Wer würde am ehesten?", "👆"),
-    EITHER_OR("eitheror", "Entweder/Oder", "⚡"),
-    WORD_CHAIN("wordchain", "Wortkette", "🔗"),
-    ANAGRAM("anagram", "Anagramme", "🔤");
+enum class GameType(val id: String, val displayName: String, val icon: String, val minPlayers: Int, val maxPlayers: Int) {
+    ANAGRAMME("anagramme", "Anagramme", "🔤", 2, 8),
+    QUIZ_CHAMP("quiz_champ", "Quiz Champ", "🧠", 2, 8),
+    ENTWEDER_ODER("entweder_oder", "Entweder/Oder", "⚖️", 3, 20),
+    GLUECKSRAD("gluecksrad", "Glücksrad", "🎡", 2, 6),
+    TIC_TAC_TOE("tic_tac_toe", "Tic Tac Toe", "❌", 2, 8),
+    ROCK_PAPER_SCISSORS("rock_paper_scissors", "Schere Stein Papier", "✊", 2, 16),
+    HANGMAN("hangman", "Galgenmännchen", "💀", 2, 8);
 
     companion object {
         fun fromId(id: String): GameType? = entries.find { it.id == id }
@@ -38,6 +39,7 @@ enum class RoomStatus {
     WAITING,
     STARTING,
     PLAYING,
+    INTERMISSION,
     FINISHED
 }
 
@@ -51,6 +53,16 @@ data class RoomSettings(
 )
 
 /**
+ * Playlist-Eintrag
+ */
+@Serializable
+data class PlaylistItem(
+    val gameType: String,
+    val roundCount: Int,
+    val timePerRound: Int
+)
+
+/**
  * Raum
  */
 @Serializable
@@ -61,7 +73,11 @@ data class Room(
     val gameType: String,
     val status: String,
     val players: List<Player>,
-    val settings: RoomSettings
+    val maxPlayers: Int = 8,
+    val minPlayers: Int = 2,
+    val settings: RoomSettings,
+    val playlist: List<PlaylistItem> = emptyList(),
+    val currentPlaylistIndex: Int = 0
 )
 
 /**

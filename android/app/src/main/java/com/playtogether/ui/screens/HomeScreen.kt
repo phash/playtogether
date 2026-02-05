@@ -50,7 +50,7 @@ class HomeViewModel @Inject constructor(
 
     var playerName by mutableStateOf("")
     var roomCode by mutableStateOf("")
-    var selectedGameType by mutableStateOf(GameType.EITHER_OR)
+    var selectedGameType by mutableStateOf(GameType.QUIZ_CHAMP)
     var showJoinDialog by mutableStateOf(false)
     var showCreateDialog by mutableStateOf(false)
 

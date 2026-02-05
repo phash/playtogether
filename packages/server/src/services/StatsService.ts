@@ -140,47 +140,19 @@ export class StatsService {
   }
 
   /**
-   * Update quiz-specific stats
+   * Update game-specific stats (stored as JSON)
    */
-  async updateQuizStats(
+  async updateGameSpecificStats(
     userId: string,
-    correctAnswers: number,
-    totalAnswers: number,
-    fastestAnswerMs?: number
+    updates: Record<string, any>
   ): Promise<void> {
     const currentStats = await this.getUserStats(userId);
+    const existing = (currentStats?.gameSpecificStats as Record<string, any>) || {};
 
     await prisma.userStats.update({
       where: { userId },
       data: {
-        quizCorrectAnswers: { increment: correctAnswers },
-        quizTotalAnswers: { increment: totalAnswers },
-        quizFastestAnswerMs: fastestAnswerMs !== undefined &&
-          (!currentStats?.quizFastestAnswerMs || fastestAnswerMs < currentStats.quizFastestAnswerMs)
-          ? fastestAnswerMs
-          : undefined,
-      },
-    });
-  }
-
-  /**
-   * Update reaction game stats
-   */
-  async updateReactionStats(
-    userId: string,
-    won: boolean,
-    bestTimeMs?: number
-  ): Promise<void> {
-    const currentStats = await this.getUserStats(userId);
-
-    await prisma.userStats.update({
-      where: { userId },
-      data: {
-        reactionGamesWon: won ? { increment: 1 } : undefined,
-        reactionBestTimeMs: bestTimeMs !== undefined &&
-          (!currentStats?.reactionBestTimeMs || bestTimeMs < currentStats.reactionBestTimeMs)
-          ? bestTimeMs
-          : undefined,
+        gameSpecificStats: { ...existing, ...updates },
       },
     });
   }

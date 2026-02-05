@@ -2,9 +2,9 @@
  * WebSocket-Nachrichten-Typen für die PlayTogether-Plattform
  */
 
-import type { RoomState, RoomSettings } from './room.js';
+import type { RoomState, RoomSettings, PlaylistItem } from './room.js';
 import type { PlayerState } from './player.js';
-import type { GameType, GameState, QuizAnswer } from './game.js';
+import type { GameType, GameState } from './game.js';
 import type { MoodLevel, ReactionType, EquippedCosmetics, MoodyReaction } from './moody.js';
 
 // === Client -> Server Nachrichten ===
@@ -17,6 +17,7 @@ export type ClientMessage =
   | StartGameMessage
   | GameActionMessage
   | UpdateSettingsMessage
+  | PlaylistUpdateMessage
   | MoodyUpdateMessage
   | MoodyReactionMessage;
 
@@ -65,6 +66,13 @@ export interface UpdateSettingsMessage {
   payload: Partial<RoomSettings>;
 }
 
+export interface PlaylistUpdateMessage {
+  type: 'playlist_update';
+  payload: {
+    playlist: PlaylistItem[];
+  };
+}
+
 // Moody-Nachrichten vom Client
 export interface MoodyUpdateMessage {
   type: 'moody_update';
@@ -94,6 +102,11 @@ export type ServerMessage =
   | GameStartingMessage
   | GameStateMessage
   | GameEndedMessage
+  | TimerTickMessage
+  | AnswerResultMessage
+  | AnswerConfirmedMessage
+  | IntermissionMessage
+  | PlaylistEndedMessage
   | ErrorMessage
   | MoodyUpdatedMessage
   | MoodyReactionReceivedMessage;
@@ -162,6 +175,48 @@ export interface GameEndedMessage {
   payload: {
     finalScores: Record<string, number>;
     winner: string;
+  };
+}
+
+export interface TimerTickMessage {
+  type: 'timer_tick';
+  payload: {
+    timeRemaining: number;
+  };
+}
+
+export interface AnswerResultMessage {
+  type: 'answer_result';
+  payload: {
+    playerId: string;
+    correct: boolean;
+    points: number;
+    streak?: number;
+  };
+}
+
+export interface AnswerConfirmedMessage {
+  type: 'answer_confirmed';
+  payload: {
+    playerId: string;
+  };
+}
+
+export interface IntermissionMessage {
+  type: 'intermission';
+  payload: {
+    rankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+    nextGame?: { type: GameType; name: string; icon: string };
+    currentPlaylistIndex: number;
+    totalPlaylistItems: number;
+    countdownSeconds: number;
+  };
+}
+
+export interface PlaylistEndedMessage {
+  type: 'playlist_ended';
+  payload: {
+    finalRankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
   };
 }
 

@@ -3,6 +3,7 @@ package com.playtogether.data.repository
 import com.playtogether.data.api.SocketClient
 import com.playtogether.data.model.GameState
 import com.playtogether.data.model.Player
+import com.playtogether.data.model.PlaylistItem
 import com.playtogether.data.model.Room
 import com.playtogether.data.model.RoomSettings
 import kotlinx.coroutines.CoroutineScope
@@ -102,6 +103,10 @@ class GameRepository @Inject constructor(
                 _room.value = _room.value?.copy(status = "playing")
             }
 
+            "game_intermission" -> {
+                _room.value = _room.value?.copy(status = "intermission")
+            }
+
             "game_ended" -> {
                 _room.value = _room.value?.copy(status = "finished")
             }
@@ -120,6 +125,20 @@ class GameRepository @Inject constructor(
 
         val settingsJson = json.optJSONObject("settings") ?: JSONObject()
 
+        val playlistArray = json.optJSONArray("playlist")
+        val playlist = if (playlistArray != null) {
+            (0 until playlistArray.length()).map { i ->
+                val item = playlistArray.getJSONObject(i)
+                PlaylistItem(
+                    gameType = item.getString("gameType"),
+                    roundCount = item.optInt("roundCount", 5),
+                    timePerRound = item.optInt("timePerRound", 30)
+                )
+            }
+        } else {
+            emptyList()
+        }
+
         return Room(
             id = json.getString("id"),
             code = json.getString("code"),
@@ -127,10 +146,14 @@ class GameRepository @Inject constructor(
             gameType = json.getString("gameType"),
             status = json.getString("status"),
             players = players,
+            maxPlayers = json.optInt("maxPlayers", 8),
+            minPlayers = json.optInt("minPlayers", 2),
             settings = RoomSettings(
                 roundCount = settingsJson.optInt("roundCount", 5),
                 timePerRound = settingsJson.optInt("timePerRound", 30)
-            )
+            ),
+            playlist = playlist,
+            currentPlaylistIndex = json.optInt("currentPlaylistIndex", 0)
         )
     }
 

@@ -3,10 +3,12 @@
  */
 
 export * from './BaseGameEngine.js';
-export * from './QuizEngine.js';
-export * from './WouldYouRatherEngine.js';
-export * from './MostLikelyEngine.js';
-export * from './EitherOrEngine.js';
-export * from './WordChainEngine.js';
-export * from './AnagramEngine.js';
+export * from './AnagrammeEngine.js';
+export * from './QuizChampEngine.js';
+export * from './EntwederOderEngine.js';
+export * from './HangmanEngine.js';
+export * from './GluecksradEngine.js';
+export * from './TicTacToeEngine.js';
+export * from './RockPaperScissorsEngine.js';
 export * from './GameManager.js';
+export * from './PlaylistManager.js';

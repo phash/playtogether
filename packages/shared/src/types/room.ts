@@ -5,7 +5,14 @@
 import type { Player, PlayerState } from './player.js';
 import type { GameType, GameState } from './game.js';
 
-export type RoomStatus = 'waiting' | 'starting' | 'playing' | 'finished';
+export type RoomStatus = 'waiting' | 'starting' | 'playing' | 'intermission' | 'finished';
+
+// Playlist-Item für mehrere Spiele hintereinander
+export interface PlaylistItem {
+  gameType: GameType;
+  roundCount: number;
+  timePerRound: number;
+}
 
 export interface Room {
   id: string;
@@ -19,6 +26,8 @@ export interface Room {
   createdAt: number;
   settings: RoomSettings;
   gameState?: GameState;
+  playlist: PlaylistItem[];
+  currentPlaylistIndex: number;
 }
 
 export interface RoomSettings {
@@ -45,6 +54,8 @@ export interface RoomState {
   maxPlayers: number;
   minPlayers: number;
   settings: RoomSettings;
+  playlist: PlaylistItem[];
+  currentPlaylistIndex: number;
 }
 
 export interface RoomCreate {

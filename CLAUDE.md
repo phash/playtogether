@@ -67,11 +67,23 @@ To add a new game:
 - Players join via code, host controls game start
 - Room state broadcast to all players via Socket.io
 
+### Playlist System
+- `PlaylistManager` in `packages/server/src/games/` manages multiple games in sequence
+- Cumulative scores across all games in a playlist
+- `IntermissionScreen` component shown between games with rankings and next game preview
+- Socket events: `intermission`, `timer_tick`, `playlist_ended`
+
+### Scoring System
+- `calculateSpeedScore(base, timeLeftMs, maxTimeMs)` in `BaseGameEngine` for speed bonuses (1.0-2.0x)
+- Quiz Champ: streak bonuses (+25 at 3 correct, +50 at 5+)
+- Game-specific stats stored as JSON in `UserStats.gameSpecificStats`
+
 ### Database (Prisma)
 Schema in `packages/server/prisma/schema.prisma`:
 - `User` - accounts (can be guests)
 - `Moody` - avatar customization and XP
-- `UserStats` - game statistics
+- `UserStats` - game statistics (with `gameSpecificStats` JSON field)
+- `GameScore` - per-round scoring with base points and speed bonus
 - `MonthlyScore` / `CrownHolder` - monthly leaderboard system
 - `GameSession` / `GameParticipant` - game history
 
@@ -96,9 +108,18 @@ Key variables in `.env` (see `.env.example`):
 
 | Game Type | Engine Class | Description |
 |-----------|--------------|-------------|
-| `quiz` | QuizEngine | Trivia with timer |
-| `wouldyourather` | WouldYouRatherEngine | Choose between options |
-| `mostlikely` | MostLikelyEngine | Vote for players |
-| `eitheror` | EitherOrEngine | Quick binary choices |
-| `wordchain` | WordChainEngine | Word chain game |
-| `anagram` | AnagramEngine | Form words from letters |
+| `anagramme` | AnagrammeEngine | Unscramble letters to form a word |
+| `quiz_champ` | QuizChampEngine | 4-option quiz with streak bonuses |
+| `entweder_oder` | EntwederOderEngine | Majority vote either/or |
+| `gluecksrad` | GluecksradEngine | Wheel of Fortune with turn-based play |
+| `tic_tac_toe` | TicTacToeEngine | Tic-tac-toe with tournament brackets |
+| `rock_paper_scissors` | RockPaperScissorsEngine | Rock-paper-scissors tournament |
+| `hangman` | HangmanEngine | Cooperative hangman word guessing |
+
+### Game Content
+Content data in `packages/shared/src/data/gameContent.ts`:
+- 145 quiz questions (8 categories, 3 difficulty levels)
+- 91 either/or questions (7 categories)
+- 150 German words (easy/medium/hard) for Anagramme, Hangman, Gluecksrad
+- 100 Gluecksrad phrases (7 categories)
+- Utility functions: `shuffleArray`, `scrambleWord`, `getRandomWords`, `getRandomQuestions`

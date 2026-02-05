@@ -24,7 +24,7 @@ export default function HomePage() {
   const joinParam = searchParams.get('join');
 
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>(joinParam ? 'join' : 'menu');
-  const [selectedGame, setSelectedGame] = useState<GameType>('quiz');
+  const [selectedGame, setSelectedGame] = useState<GameType>('quiz_champ');
   const [joinCode, setJoinCode] = useState(joinParam?.toUpperCase() ?? '');
   const [localName, setLocalName] = useState(playerName);
 

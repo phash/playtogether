@@ -5,15 +5,15 @@
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from '../rooms/RoomManager.js';
 import { gameManager } from '../games/GameManager.js';
+import { PlaylistManager } from '../games/PlaylistManager.js';
 import type {
   ClientMessage,
   ServerMessage,
-  ErrorCodes,
   MoodLevel,
   EquippedCosmetics,
   ReactionType,
   MoodyReaction,
-  AnyGameState,
+  PlaylistItem,
 } from '@playtogether/shared';
 import { generateId } from '@playtogether/shared';
 
@@ -24,13 +24,15 @@ interface SocketData {
   cosmetics?: EquippedCosmetics;
 }
 
+// Track active playlist managers per room
+const playlistManagers: Map<string, PlaylistManager> = new Map();
+
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
   io.on('connection', (socket: Socket) => {
     console.log(`🔌 Neue Verbindung: ${socket.id}`);
 
     const socketData: SocketData = {};
 
-    // Hilfsfunktion zum Senden von Nachrichten
     const send = (message: ServerMessage) => {
       socket.emit('message', message);
     };
@@ -43,7 +45,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       io.to(roomId).emit('message', message);
     };
 
-    // Nachricht vom Client verarbeiten
     socket.on('message', (message: ClientMessage) => {
       try {
         handleMessage(message);
@@ -76,6 +77,9 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         case 'update_settings':
           handleUpdateSettings(message.payload);
           break;
+        case 'playlist_update':
+          handlePlaylistUpdate(message.payload);
+          break;
         case 'moody_update':
           handleMoodyUpdate(message.payload);
           break;
@@ -102,7 +106,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         socketData.playerId = playerId;
         socketData.roomId = room.id;
 
-        // Socket dem Raum hinzufügen
         socket.join(room.id);
 
         send({
@@ -134,10 +137,8 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         socketData.playerId = playerId;
         socketData.roomId = room.id;
 
-        // Socket dem Raum hinzufügen
         socket.join(room.id);
 
-        // Dem neuen Spieler die Rauminformationen senden
         send({
           type: 'room_joined',
           payload: {
@@ -146,7 +147,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           },
         });
 
-        // Anderen Spielern mitteilen
         const player = room.players.get(playerId)!;
         socket.to(room.id).emit('message', {
           type: 'player_joined',
@@ -173,7 +173,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       const result = roomManager.leaveRoom(socketData.playerId);
 
       if (result) {
-        // Anderen Spielern mitteilen
         broadcastToRoom(roomId, {
           type: 'player_left',
           payload: {
@@ -182,8 +181,12 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           },
         });
       } else {
-        // Raum wurde gelöscht, Spiel auch beenden
         gameManager.endGame(roomId);
+        const pm = playlistManagers.get(roomId);
+        if (pm) {
+          pm.destroy();
+          playlistManagers.delete(roomId);
+        }
       }
 
       socket.leave(roomId);
@@ -200,7 +203,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       const player = room.players.get(socketData.playerId);
       if (!player) return;
 
-      // Player-Update an alle senden
       broadcastToRoom(socketData.roomId, {
         type: 'player_updated',
         payload: {
@@ -222,13 +224,11 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       const room = roomManager.getRoom(socketData.roomId);
       if (!room) return;
 
-      // Nur Host kann starten
       if (room.hostId !== socketData.playerId) {
         sendError('NOT_HOST', 'Nur der Host kann das Spiel starten');
         return;
       }
 
-      // Mindestspielerzahl prüfen
       if (room.players.size < room.minPlayers) {
         sendError(
           'NOT_ENOUGH_PLAYERS',
@@ -237,7 +237,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         return;
       }
 
-      // Countdown starten
       roomManager.updateRoomStatus(socketData.roomId, 'starting');
 
       broadcastToRoom(socketData.roomId, {
@@ -247,51 +246,142 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
 
       const roomId = socketData.roomId;
 
-      // Nach Countdown das Spiel starten
       setTimeout(() => {
         if (!roomId) return;
+        const currentRoom = roomManager.getRoom(roomId);
+        if (!currentRoom) return;
+
         roomManager.updateRoomStatus(roomId, 'playing');
 
-        // Event Callback für Spiel-Events
         const onGameEvent = (event: string, data: unknown) => {
-          broadcastToRoom(roomId, {
-            type: event as any,
-            payload: data as any,
-          });
+          if (event === 'game_ended') {
+            handleGameEnded(roomId, data as { finalScores: Record<string, number>; winner: string });
+          } else {
+            broadcastToRoom(roomId, {
+              type: event as any,
+              payload: data as any,
+            });
+          }
         };
 
-        // Prüfen ob Spieltyp unterstützt wird
-        if (gameManager.isGameTypeSupported(room.gameType)) {
-          // Spiel-Engine erstellen und starten
-          const engine = gameManager.createGame(room, onGameEvent);
+        // Set up playlist manager if playlist has more than 1 item
+        if (currentRoom.playlist.length > 1) {
+          const playerNames: Record<string, string> = {};
+          for (const [id, player] of currentRoom.players) {
+            playerNames[id] = player.name;
+          }
+          const pm = new PlaylistManager(
+            roomId,
+            [...currentRoom.players.keys()],
+            playerNames,
+            currentRoom.playlist,
+            gameManager,
+            (event, data) => broadcastToRoom(roomId, { type: event as any, payload: data as any })
+          );
+          playlistManagers.set(roomId, pm);
+        }
+
+        // Start the first game
+        const firstItem = currentRoom.playlist[0];
+        if (firstItem) {
+          const engine = gameManager.createGameWithSettings(
+            roomId,
+            firstItem.gameType,
+            [...currentRoom.players.keys()],
+            { roundCount: firstItem.roundCount, timePerRound: firstItem.timePerRound },
+            onGameEvent
+          );
           if (engine) {
             engine.start();
           }
         } else {
-          // Fallback für nicht implementierte Spiele
-          broadcastToRoom(roomId, {
-            type: 'game_state',
-            payload: {
-              state: {
-                type: room.gameType,
-                currentRound: 1,
-                totalRounds: room.settings.roundCount,
-                phase: 'active',
-                timeRemaining: room.settings.timePerRound,
-                scores: Object.fromEntries(
-                  [...room.players.keys()].map((id) => [id, 0])
-                ),
-              },
-            },
-          });
+          // Fallback: use room's gameType
+          const engine = gameManager.createGame(currentRoom, onGameEvent);
+          if (engine) {
+            engine.start();
+          }
         }
       }, 3000);
+    }
+
+    function handleGameEnded(roomId: string, data: { finalScores: Record<string, number>; winner: string }) {
+      const pm = playlistManagers.get(roomId);
+
+      if (pm) {
+        // Playlist mode: add scores and check for next game
+        pm.addGameScores(data.finalScores);
+
+        // Broadcast game_ended for current game
+        broadcastToRoom(roomId, {
+          type: 'game_ended',
+          payload: data,
+        });
+
+        gameManager.endGame(roomId);
+
+        if (pm.advance()) {
+          // More games to play - intermission
+          roomManager.updateRoomStatus(roomId, 'intermission');
+          pm.startIntermission(10);
+
+          // After intermission, start next game
+          setTimeout(() => {
+            const currentRoom = roomManager.getRoom(roomId);
+            if (!currentRoom) return;
+
+            const nextItem = pm.getCurrentItem();
+            if (!nextItem) {
+              pm.endPlaylist();
+              pm.destroy();
+              playlistManagers.delete(roomId);
+              roomManager.updateRoomStatus(roomId, 'finished');
+              return;
+            }
+
+            roomManager.updateRoomStatus(roomId, 'playing');
+            currentRoom.gameType = nextItem.gameType;
+            currentRoom.currentPlaylistIndex = pm.currentPlaylistIndex;
+
+            const onGameEvent = (event: string, eventData: unknown) => {
+              if (event === 'game_ended') {
+                handleGameEnded(roomId, eventData as { finalScores: Record<string, number>; winner: string });
+              } else {
+                broadcastToRoom(roomId, { type: event as any, payload: eventData as any });
+              }
+            };
+
+            const engine = gameManager.createGameWithSettings(
+              roomId,
+              nextItem.gameType,
+              [...currentRoom.players.keys()],
+              { roundCount: nextItem.roundCount, timePerRound: nextItem.timePerRound },
+              onGameEvent
+            );
+            if (engine) {
+              engine.start();
+            }
+          }, 10000); // 10s intermission
+        } else {
+          // Playlist complete
+          pm.endPlaylist();
+          pm.destroy();
+          playlistManagers.delete(roomId);
+          roomManager.updateRoomStatus(roomId, 'finished');
+        }
+      } else {
+        // Single game mode
+        broadcastToRoom(roomId, {
+          type: 'game_ended',
+          payload: data,
+        });
+        gameManager.endGame(roomId);
+        roomManager.updateRoomStatus(roomId, 'finished');
+      }
     }
 
     function handleGameAction(payload: { action: string; data: unknown }) {
       if (!socketData.roomId || !socketData.playerId) return;
 
-      // Spielaktion an GameManager weiterleiten
       const handled = gameManager.handleAction(
         socketData.roomId,
         socketData.playerId,
@@ -312,16 +402,44 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       const room = roomManager.getRoom(socketData.roomId);
       if (!room) return;
 
-      // Nur Host kann Einstellungen ändern
       if (room.hostId !== socketData.playerId) {
         sendError('NOT_HOST', 'Nur der Host kann Einstellungen ändern');
         return;
       }
 
-      // Einstellungen aktualisieren
       room.settings = { ...room.settings, ...payload };
 
-      // Allen Spielern mitteilen
+      broadcastToRoom(socketData.roomId, {
+        type: 'room_updated',
+        payload: {
+          room: roomManager.getRoomState(room),
+        },
+      });
+    }
+
+    function handlePlaylistUpdate(payload: { playlist: PlaylistItem[] }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const room = roomManager.getRoom(socketData.roomId);
+      if (!room) return;
+
+      if (room.hostId !== socketData.playerId) {
+        sendError('NOT_HOST', 'Nur der Host kann die Playlist ändern');
+        return;
+      }
+
+      if (room.status !== 'waiting') {
+        sendError('GAME_ALREADY_STARTED', 'Playlist kann nur vor Spielstart geändert werden');
+        return;
+      }
+
+      room.playlist = payload.playlist;
+
+      // Update gameType to first item in playlist
+      if (payload.playlist.length > 0) {
+        room.gameType = payload.playlist[0].gameType;
+      }
+
       broadcastToRoom(socketData.roomId, {
         type: 'room_updated',
         payload: {
@@ -337,11 +455,9 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
     function handleMoodyUpdate(payload: { mood: MoodLevel; cosmetics: EquippedCosmetics }) {
       if (!socketData.roomId || !socketData.playerId) return;
 
-      // Lokalen State aktualisieren
       socketData.mood = payload.mood;
       socketData.cosmetics = payload.cosmetics;
 
-      // Allen anderen Spielern im Raum mitteilen
       socket.to(socketData.roomId).emit('message', {
         type: 'moody_updated',
         payload: {
@@ -350,8 +466,6 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           cosmetics: payload.cosmetics,
         },
       });
-
-      console.log(`😊 ${socketData.playerId} ist jetzt: ${payload.mood}`);
     }
 
     function handleMoodyReaction(payload: { reactionType: ReactionType; toPlayerId?: string }) {
@@ -365,22 +479,10 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         timestamp: Date.now(),
       };
 
-      // An alle im Raum senden (oder nur an Ziel, wenn spezifiziert)
-      if (payload.toPlayerId) {
-        // Gezielte Reaction - an alle senden, damit sie die Animation sehen
-        broadcastToRoom(socketData.roomId, {
-          type: 'moody_reaction_received',
-          payload: { reaction },
-        });
-      } else {
-        // Broadcast-Reaction an alle
-        broadcastToRoom(socketData.roomId, {
-          type: 'moody_reaction_received',
-          payload: { reaction },
-        });
-      }
-
-      console.log(`🎉 Reaction von ${socketData.playerId}: ${payload.reactionType}`);
+      broadcastToRoom(socketData.roomId, {
+        type: 'moody_reaction_received',
+        payload: { reaction },
+      });
     }
 
     // Verbindung getrennt
