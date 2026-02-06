@@ -19,6 +19,8 @@ export type ClientMessage =
   | GameActionMessage
   | UpdateSettingsMessage
   | PlaylistUpdateMessage
+  | GameVoteMessage
+  | EndSessionMessage
   | MoodyUpdateMessage
   | MoodyReactionMessage;
 
@@ -82,6 +84,17 @@ export interface PlaylistUpdateMessage {
   };
 }
 
+export interface GameVoteMessage {
+  type: 'game_vote';
+  payload: {
+    gameType: GameType;
+  };
+}
+
+export interface EndSessionMessage {
+  type: 'end_session';
+}
+
 // Moody-Nachrichten vom Client
 export interface MoodyUpdateMessage {
   type: 'moody_update';
@@ -118,6 +131,11 @@ export type ServerMessage =
   | AnswerConfirmedMessage
   | IntermissionMessage
   | PlaylistEndedMessage
+  | GameResultsMessage
+  | VoteStartMessage
+  | VoteUpdateMessage
+  | VoteResultMessage
+  | SessionEndedMessage
   | ErrorMessage
   | MoodyUpdatedMessage
   | MoodyReactionReceivedMessage;
@@ -244,6 +262,51 @@ export interface PlaylistEndedMessage {
   type: 'playlist_ended';
   payload: {
     finalRankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+  };
+}
+
+export interface GameResultsMessage {
+  type: 'game_results';
+  payload: {
+    finalScores: Record<string, number>;
+    winner: string;
+    winnerName: string;
+    rankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+    gamesPlayed: number;
+  };
+}
+
+export interface VoteStartMessage {
+  type: 'vote_start';
+  payload: {
+    candidates: Array<{ type: GameType; name: string; icon: string; description: string }>;
+    countdownSeconds: number;
+  };
+}
+
+export interface VoteUpdateMessage {
+  type: 'vote_update';
+  payload: {
+    votes: Record<string, number>;
+    totalVoters: number;
+    votedCount: number;
+  };
+}
+
+export interface VoteResultMessage {
+  type: 'vote_result';
+  payload: {
+    chosenGame: { type: GameType; name: string; icon: string };
+    voteTally: Record<string, number>;
+    wasTiebreak: boolean;
+  };
+}
+
+export interface SessionEndedMessage {
+  type: 'session_ended';
+  payload: {
+    finalRankings: Array<{ playerId: string; playerName: string; score: number; rank: number }>;
+    gamesPlayed: number;
   };
 }
 

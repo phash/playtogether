@@ -5,7 +5,7 @@
 import type { Player, PlayerState } from './player.js';
 import type { GameType, GameState } from './game.js';
 
-export type RoomStatus = 'waiting' | 'starting' | 'playing' | 'intermission' | 'finished';
+export type RoomStatus = 'waiting' | 'starting' | 'playing' | 'results' | 'voting' | 'intermission' | 'finished';
 
 // Playlist-Item für mehrere Spiele hintereinander
 export interface PlaylistItem {

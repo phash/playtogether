@@ -5,7 +5,7 @@
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from '../rooms/RoomManager.js';
 import { gameManager } from '../games/GameManager.js';
-import { PlaylistManager } from '../games/PlaylistManager.js';
+import { VoteManager } from '../games/VoteManager.js';
 import type {
   ClientMessage,
   ServerMessage,
@@ -14,8 +14,9 @@ import type {
   ReactionType,
   MoodyReaction,
   PlaylistItem,
+  GameType,
 } from '@playtogether/shared';
-import { generateId } from '@playtogether/shared';
+import { generateId, getGameInfo } from '@playtogether/shared';
 
 interface SocketData {
   playerId?: string;
@@ -24,8 +25,8 @@ interface SocketData {
   cosmetics?: EquippedCosmetics;
 }
 
-// Track active playlist managers per room
-const playlistManagers: Map<string, PlaylistManager> = new Map();
+// Track active vote managers per room
+const voteManagers: Map<string, VoteManager> = new Map();
 
 // Track disconnect timers for grace period (playerId -> timer)
 const disconnectTimers: Map<string, NodeJS.Timeout> = new Map();
@@ -88,6 +89,12 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           break;
         case 'playlist_update':
           handlePlaylistUpdate(message.payload);
+          break;
+        case 'game_vote':
+          handleGameVote(message.payload);
+          break;
+        case 'end_session':
+          handleEndSession();
           break;
         case 'moody_update':
           handleMoodyUpdate(message.payload);
@@ -202,10 +209,10 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
         });
       } else {
         gameManager.endGame(roomId);
-        const pm = playlistManagers.get(roomId);
-        if (pm) {
-          pm.destroy();
-          playlistManagers.delete(roomId);
+        const vm = voteManagers.get(roomId);
+        if (vm) {
+          vm.destroy();
+          voteManagers.delete(roomId);
         }
       }
 
@@ -273,6 +280,26 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
 
         roomManager.updateRoomStatus(roomId, 'playing');
 
+        // Set up VoteManager for session scoring
+        const playerNames: Record<string, string> = {};
+        for (const [id, player] of currentRoom.players) {
+          playerNames[id] = player.name;
+        }
+        const vm = new VoteManager(
+          roomId,
+          [...currentRoom.players.keys()],
+          playerNames,
+          (event, data) => {
+            broadcastToRoom(roomId, { type: event as any, payload: data as any });
+            // When vote_result is emitted, start the next game after a short delay
+            if (event === 'vote_result') {
+              const voteResult = data as { chosenGame: { type: GameType; name: string; icon: string } };
+              startNextGameAfterVote(roomId, voteResult.chosenGame.type);
+            }
+          }
+        );
+        voteManagers.set(roomId, vm);
+
         const onGameEvent = (event: string, data: unknown) => {
           if (event === 'game_ended') {
             handleGameEnded(roomId, data as { finalScores: Record<string, number>; winner: string });
@@ -284,26 +311,10 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           }
         };
 
-        // Set up playlist manager if playlist has more than 1 item
-        if (currentRoom.playlist.length > 1) {
-          const playerNames: Record<string, string> = {};
-          for (const [id, player] of currentRoom.players) {
-            playerNames[id] = player.name;
-          }
-          const pm = new PlaylistManager(
-            roomId,
-            [...currentRoom.players.keys()],
-            playerNames,
-            currentRoom.playlist,
-            gameManager,
-            (event, data) => broadcastToRoom(roomId, { type: event as any, payload: data as any })
-          );
-          playlistManagers.set(roomId, pm);
-        }
-
-        // Start the first game
+        // Start the first game from playlist or room gameType
         const firstItem = currentRoom.playlist[0];
         if (firstItem) {
+          vm.setLastPlayedGame(firstItem.gameType);
           const engine = gameManager.createGameWithSettings(
             roomId,
             firstItem.gameType,
@@ -316,6 +327,7 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           }
         } else {
           // Fallback: use room's gameType
+          vm.setLastPlayedGame(currentRoom.gameType);
           const engine = gameManager.createGame(currentRoom, onGameEvent);
           if (engine) {
             engine.start();
@@ -325,78 +337,140 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
     }
 
     function handleGameEnded(roomId: string, data: { finalScores: Record<string, number>; winner: string }) {
-      const pm = playlistManagers.get(roomId);
+      const vm = voteManagers.get(roomId);
 
-      if (pm) {
-        // Playlist mode: add scores and check for next game
-        pm.addGameScores(data.finalScores);
+      // End the game engine
+      gameManager.endGame(roomId);
 
-        // Broadcast game_ended for current game
-        broadcastToRoom(roomId, {
-          type: 'game_ended',
-          payload: data,
-        });
+      if (vm) {
+        // Add scores to cumulative
+        vm.addGameScores(data.finalScores);
 
-        gameManager.endGame(roomId);
+        // Switch to results phase
+        roomManager.updateRoomStatus(roomId, 'results');
 
-        if (pm.advance()) {
-          // More games to play - intermission
-          roomManager.updateRoomStatus(roomId, 'intermission');
-          pm.startIntermission(10);
+        // Send game_results with cumulative rankings
+        vm.emitGameResults(data.finalScores, data.winner);
 
-          // After intermission, start next game
-          setTimeout(() => {
-            const currentRoom = roomManager.getRoom(roomId);
-            if (!currentRoom) return;
+        // After 7 seconds, start voting
+        setTimeout(() => {
+          const currentRoom = roomManager.getRoom(roomId);
+          if (!currentRoom) return;
 
-            const nextItem = pm.getCurrentItem();
-            if (!nextItem) {
-              pm.endPlaylist();
-              pm.destroy();
-              playlistManagers.delete(roomId);
-              roomManager.updateRoomStatus(roomId, 'finished');
-              return;
-            }
+          const currentVm = voteManagers.get(roomId);
+          if (!currentVm) return;
 
-            roomManager.updateRoomStatus(roomId, 'playing');
-            currentRoom.gameType = nextItem.gameType;
-            currentRoom.currentPlaylistIndex = pm.currentPlaylistIndex;
+          // Check if only 1 player — skip voting, pick random game
+          if (currentRoom.players.size <= 1) {
+            // Auto-pick a random game
+            roomManager.updateRoomStatus(roomId, 'voting');
+            currentVm.startVoting(1); // Resolve almost immediately
+            return;
+          }
 
-            const onGameEvent = (event: string, eventData: unknown) => {
-              if (event === 'game_ended') {
-                handleGameEnded(roomId, eventData as { finalScores: Record<string, number>; winner: string });
-              } else {
-                broadcastToRoom(roomId, { type: event as any, payload: eventData as any });
-              }
-            };
-
-            const engine = gameManager.createGameWithSettings(
-              roomId,
-              nextItem.gameType,
-              [...currentRoom.players.keys()],
-              { roundCount: nextItem.roundCount, timePerRound: nextItem.timePerRound },
-              onGameEvent
-            );
-            if (engine) {
-              engine.start();
-            }
-          }, 10000); // 10s intermission
-        } else {
-          // Playlist complete
-          pm.endPlaylist();
-          pm.destroy();
-          playlistManagers.delete(roomId);
-          roomManager.updateRoomStatus(roomId, 'finished');
-        }
+          roomManager.updateRoomStatus(roomId, 'voting');
+          currentVm.startVoting(30);
+        }, 7000);
       } else {
-        // Single game mode
+        // No VoteManager (shouldn't happen normally) — fallback to finished
         broadcastToRoom(roomId, {
           type: 'game_ended',
           payload: data,
         });
-        gameManager.endGame(roomId);
         roomManager.updateRoomStatus(roomId, 'finished');
       }
+    }
+
+    function handleGameVote(payload: { gameType: GameType }) {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const vm = voteManagers.get(socketData.roomId);
+      if (!vm) return;
+
+      vm.castVote(socketData.playerId, payload.gameType);
+    }
+
+    function handleEndSession() {
+      if (!socketData.roomId || !socketData.playerId) return;
+
+      const room = roomManager.getRoom(socketData.roomId);
+      if (!room) return;
+
+      // Only host can end session
+      if (room.hostId !== socketData.playerId) {
+        sendError('NOT_HOST', 'Nur der Host kann die Session beenden');
+        return;
+      }
+
+      const vm = voteManagers.get(socketData.roomId);
+      const rankings = vm ? vm.getRankings() : [];
+      const gamesPlayed = vm ? vm.getGamesPlayed() : 0;
+
+      // Send session_ended to all players
+      broadcastToRoom(socketData.roomId, {
+        type: 'session_ended',
+        payload: {
+          finalRankings: rankings,
+          gamesPlayed,
+        },
+      });
+
+      // Clean up
+      gameManager.endGame(socketData.roomId);
+      if (vm) {
+        vm.destroy();
+        voteManagers.delete(socketData.roomId);
+      }
+      roomManager.updateRoomStatus(socketData.roomId, 'finished');
+    }
+
+    function startNextGameAfterVote(roomId: string, chosenGameType: GameType) {
+      // 3 second pause to show vote result, then countdown, then start
+      setTimeout(() => {
+        const currentRoom = roomManager.getRoom(roomId);
+        if (!currentRoom) return;
+
+        const vm = voteManagers.get(roomId);
+        if (!vm) return;
+
+        roomManager.updateRoomStatus(roomId, 'starting');
+
+        broadcastToRoom(roomId, {
+          type: 'game_starting',
+          payload: { countdown: 3 },
+        });
+
+        setTimeout(() => {
+          const room = roomManager.getRoom(roomId);
+          if (!room) return;
+
+          roomManager.updateRoomStatus(roomId, 'playing');
+          room.gameType = chosenGameType;
+
+          const gameInfo = getGameInfo(chosenGameType);
+          const onGameEvent = (event: string, eventData: unknown) => {
+            if (event === 'game_ended') {
+              handleGameEnded(roomId, eventData as { finalScores: Record<string, number>; winner: string });
+            } else {
+              broadcastToRoom(roomId, { type: event as any, payload: eventData as any });
+            }
+          };
+
+          const engine = gameManager.createGameWithSettings(
+            roomId,
+            chosenGameType,
+            [...room.players.keys()],
+            {
+              roundCount: gameInfo?.defaultRounds || 5,
+              timePerRound: gameInfo?.defaultTime || 30,
+            },
+            onGameEvent
+          );
+          if (engine) {
+            engine.start();
+          }
+        }, 3000);
+      }, 3000);
     }
 
     function handleGameAction(payload: { action: string; data: unknown }) {
@@ -530,6 +604,27 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
             playerName: player.name,
           },
         });
+
+        // Re-send voting state if in voting phase
+        if (room.status === 'voting') {
+          const vm = voteManagers.get(room.id);
+          if (vm) {
+            const candidates = vm.getCandidates();
+            if (candidates.length > 0) {
+              send({
+                type: 'vote_start',
+                payload: {
+                  candidates,
+                  countdownSeconds: 30, // Approximate remaining
+                },
+              });
+              send({
+                type: 'vote_update',
+                payload: vm.getVoteUpdate(),
+              });
+            }
+          }
+        }
       } catch (error) {
         sendError('RECONNECT_FAILED', (error as Error).message);
       }
@@ -605,6 +700,14 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
             },
           });
 
+          // If in voting phase, remove their vote and recheck
+          if (room.status === 'voting') {
+            const vm = voteManagers.get(roomId);
+            if (vm) {
+              // Vote is removed when player is fully removed (after grace period)
+            }
+          }
+
           // Start grace period timer
           const timer = setTimeout(() => {
             disconnectTimers.delete(playerId);
@@ -625,13 +728,19 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
                     newHostId: result.newHostId,
                   },
                 });
+
+                // Remove from VoteManager
+                const vm = voteManagers.get(roomId);
+                if (vm) {
+                  vm.removePlayer(playerId);
+                }
               } else {
                 // Room was deleted (no players left)
                 gameManager.endGame(roomId);
-                const pm = playlistManagers.get(roomId);
-                if (pm) {
-                  pm.destroy();
-                  playlistManagers.delete(roomId);
+                const vm = voteManagers.get(roomId);
+                if (vm) {
+                  vm.destroy();
+                  voteManagers.delete(roomId);
                 }
               }
             }

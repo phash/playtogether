@@ -13,21 +13,32 @@ import GluecksradGame from '../games/GluecksradGame';
 import TicTacToeGame from '../games/TicTacToeGame';
 import RockPaperScissorsGame from '../games/RockPaperScissorsGame';
 import HangmanGame from '../games/HangmanGame';
-import IntermissionScreen from '../components/IntermissionScreen';
+import ResultsScreen from '../components/ResultsScreen';
+import VoteScreen from '../components/VoteScreen';
+import SessionEndScreen from '../components/SessionEndScreen';
 
 export default function GamePage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { room, gameState, playerId, leaveRoom, intermissionData, playlistEndedData } = useGameStore();
+  const {
+    room,
+    gameState,
+    playerId,
+    leaveRoom,
+    gameResultsData,
+    voteData,
+    voteResultData,
+    sessionEndedData,
+  } = useGameStore();
 
   // Redirect wenn kein Raum
   useEffect(() => {
     if (!room) {
       navigate('/');
-    } else if (room.status === 'finished' && !playlistEndedData) {
+    } else if (room.status === 'finished' && !sessionEndedData) {
       navigate(`/lobby/${code}`);
     }
-  }, [room, navigate, code, playlistEndedData]);
+  }, [room, navigate, code, sessionEndedData]);
 
   if (!room) {
     return (
@@ -40,62 +51,19 @@ export default function GamePage() {
     );
   }
 
-  // Playlist ended - final results
-  if (playlistEndedData) {
-    const { finalRankings } = playlistEndedData;
-    const winner = finalRankings[0];
-    const isWinner = winner?.playerId === playerId;
-
-    return (
-      <div className="container fade-in" style={{ paddingTop: '2rem' }}>
-        <div className="text-center mb-3">
-          <div style={{ fontSize: '4rem' }}>{isWinner ? '🏆' : '🎮'}</div>
-          <h1 style={{ fontSize: '1.5rem', margin: '0.5rem 0' }}>
-            {isWinner ? 'Du hast gewonnen!' : 'Playlist beendet!'}
-          </h1>
-        </div>
-
-        <div className="card mb-3">
-          <h3 className="mb-2" style={{ textAlign: 'center' }}>Endergebnis</h3>
-          {finalRankings.map((entry) => {
-            const medals = ['🥇', '🥈', '🥉'];
-            const isMe = entry.playerId === playerId;
-            return (
-              <div
-                key={entry.playerId}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.75rem',
-                  background: isMe ? 'var(--primary-light)' : 'var(--surface-light)',
-                  borderRadius: 'var(--radius)',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <span>
-                  {medals[entry.rank - 1] || `${entry.rank}.`} {entry.playerName}
-                  {isMe && ' (Du)'}
-                </span>
-                <span style={{ fontWeight: 'bold' }}>{entry.score} Punkte</span>
-              </div>
-            );
-          })}
-        </div>
-
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate(`/lobby/${code}`)}
-        >
-          Zurück zur Lobby
-        </button>
-      </div>
-    );
+  // Session ended - final results
+  if (sessionEndedData) {
+    return <SessionEndScreen />;
   }
 
-  // Intermission between playlist games
-  if (intermissionData) {
-    return <IntermissionScreen />;
+  // Game results - post-game ranking with confetti
+  if (gameResultsData) {
+    return <ResultsScreen />;
+  }
+
+  // Voting or vote result
+  if (voteData || voteResultData) {
+    return <VoteScreen />;
   }
 
   // Waiting for game state
@@ -163,11 +131,6 @@ export default function GamePage() {
           <span className="text-secondary">
             Runde {gameState.currentRound}/{gameState.totalRounds}
           </span>
-          {room.playlist.length > 1 && (
-            <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
-              Spiel {room.currentPlaylistIndex + 1}/{room.playlist.length}
-            </span>
-          )}
           <button
             onClick={handleLeave}
             style={{

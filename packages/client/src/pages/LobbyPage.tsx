@@ -21,7 +21,7 @@ export default function LobbyPage() {
 
   // Redirect zu Spiel wenn es losgeht
   useEffect(() => {
-    if (room?.status === 'playing' || room?.status === 'intermission') {
+    if (room?.status === 'playing' || room?.status === 'results' || room?.status === 'voting') {
       navigate(`/game/${code}`);
     }
   }, [room?.status, code, navigate]);
@@ -112,38 +112,6 @@ export default function LobbyPage() {
           Code teilen
         </button>
       </div>
-
-      {/* Playlist Preview */}
-      {room.playlist.length > 1 && (
-        <div className="card mb-3">
-          <h2 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Playlist</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {room.playlist.map((item, index) => {
-              const info = getGameInfo(item.gameType);
-              return (
-                <div
-                  key={index}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.5rem 0.75rem',
-                    background: 'var(--surface-light)',
-                    borderRadius: 'var(--radius)',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  <span style={{ fontSize: '1.2rem' }}>{info?.icon}</span>
-                  <span style={{ flex: 1 }}>{info?.name}</span>
-                  <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
-                    {item.roundCount} Runden
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Players */}
       <div className="card mb-3">
