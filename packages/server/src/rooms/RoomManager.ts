@@ -103,9 +103,9 @@ export class RoomManager {
       throw new Error('Der Raum ist voll');
     }
 
-    // Prüfen ob Name bereits vergeben
+    // Prüfen ob Name bereits vergeben (nur durch verbundene Spieler)
     for (const player of room.players.values()) {
-      if (player.name.toLowerCase() === playerName.toLowerCase()) {
+      if (player.name.toLowerCase() === playerName.toLowerCase() && player.isConnected) {
         throw new Error('Dieser Name ist bereits vergeben');
       }
     }

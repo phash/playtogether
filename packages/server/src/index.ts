@@ -55,10 +55,15 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: CLIENT_URL,
+    origin: '*',
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  // Generous timeouts for mobile connections
+  pingTimeout: 60000,    // 60s before considering connection dead (default: 20s)
+  pingInterval: 25000,   // 25s between pings
+  // Allow both transports
+  transports: ['websocket', 'polling'],
 });
 
 // Room Manager initialisieren
@@ -136,8 +141,8 @@ app.get('/api/apk-info', (_req, res) => {
   const sha256Hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
   res.json({
-    version: '1.0.1',
-    versionCode: 2,
+    version: '2.0.0',
+    versionCode: 3,
     filename: 'playtogether.apk',
     size: stats.size,
     sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,

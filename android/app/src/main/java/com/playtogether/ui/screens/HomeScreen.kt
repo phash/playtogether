@@ -279,6 +279,7 @@ fun ConnectionIndicator(state: com.playtogether.data.api.ConnectionState) {
     val (color, text) = when (state) {
         com.playtogether.data.api.ConnectionState.CONNECTED -> Success to "Verbunden"
         com.playtogether.data.api.ConnectionState.CONNECTING -> Warning to "Verbinde..."
+        com.playtogether.data.api.ConnectionState.RECONNECTING -> Warning to "Reconnecting..."
         com.playtogether.data.api.ConnectionState.ERROR -> Error to "Fehler"
         com.playtogether.data.api.ConnectionState.DISCONNECTED -> TextSecondary to "Getrennt"
     }

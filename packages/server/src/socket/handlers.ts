@@ -27,6 +27,15 @@ interface SocketData {
 // Track active playlist managers per room
 const playlistManagers: Map<string, PlaylistManager> = new Map();
 
+// Track disconnect timers for grace period (playerId -> timer)
+const disconnectTimers: Map<string, NodeJS.Timeout> = new Map();
+
+// Track disconnected players' room info for reconnection (playerId -> { roomId, playerName })
+const disconnectedPlayers: Map<string, { roomId: string; roomCode: string; playerName: string }> = new Map();
+
+// Grace period before removing a disconnected player (30 seconds)
+const DISCONNECT_GRACE_PERIOD_MS = 30_000;
+
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
   io.on('connection', (socket: Socket) => {
     console.log(`🔌 Neue Verbindung: ${socket.id}`);
@@ -85,6 +94,9 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
           break;
         case 'moody_reaction':
           handleMoodyReaction(message.payload);
+          break;
+        case 'reconnect':
+          handleReconnect(message.payload);
           break;
         default:
           sendError('INVALID_ACTION', 'Unbekannte Aktion');
@@ -168,6 +180,14 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
 
     function handleLeaveRoom() {
       if (!socketData.playerId || !socketData.roomId) return;
+
+      // Cancel any pending disconnect timer
+      const timer = disconnectTimers.get(socketData.playerId);
+      if (timer) {
+        clearTimeout(timer);
+        disconnectTimers.delete(socketData.playerId);
+      }
+      disconnectedPlayers.delete(socketData.playerId);
 
       const roomId = socketData.roomId;
       const result = roomManager.leaveRoom(socketData.playerId);
@@ -449,6 +469,73 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
     }
 
     // ============================================
+    // RECONNECT HANDLER
+    // ============================================
+
+    function handleReconnect(payload: { code: string; playerName: string }) {
+      try {
+        const room = roomManager.getRoomByCode(payload.code.toUpperCase());
+        if (!room) {
+          sendError('ROOM_NOT_FOUND', 'Raum nicht gefunden');
+          return;
+        }
+
+        // Find disconnected player by name in this room
+        let reconnectedPlayerId: string | null = null;
+        for (const [pid, player] of room.players) {
+          if (player.name.toLowerCase() === payload.playerName.toLowerCase() && !player.isConnected) {
+            reconnectedPlayerId = pid;
+            break;
+          }
+        }
+
+        if (!reconnectedPlayerId) {
+          // No disconnected player found with this name - treat as normal join
+          sendError('RECONNECT_FAILED', 'Kein getrennter Spieler gefunden');
+          return;
+        }
+
+        // Cancel the disconnect timer
+        const timer = disconnectTimers.get(reconnectedPlayerId);
+        if (timer) {
+          clearTimeout(timer);
+          disconnectTimers.delete(reconnectedPlayerId);
+        }
+        disconnectedPlayers.delete(reconnectedPlayerId);
+
+        // Restore the player's connection
+        const player = room.players.get(reconnectedPlayerId)!;
+        player.isConnected = true;
+
+        socketData.playerId = reconnectedPlayerId;
+        socketData.roomId = room.id;
+
+        socket.join(room.id);
+
+        console.log(`🔄 ${player.name} hat sich in Raum ${room.code} wiederverbunden`);
+
+        send({
+          type: 'room_joined',
+          payload: {
+            room: roomManager.getRoomState(room),
+            playerId: reconnectedPlayerId,
+          },
+        });
+
+        // Notify others
+        socket.to(room.id).emit('message', {
+          type: 'player_reconnected',
+          payload: {
+            playerId: reconnectedPlayerId,
+            playerName: player.name,
+          },
+        });
+      } catch (error) {
+        sendError('RECONNECT_FAILED', (error as Error).message);
+      }
+    }
+
+    // ============================================
     // MOODY HANDLERS
     // ============================================
 
@@ -485,21 +572,72 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       });
     }
 
-    // Verbindung getrennt
+    // Verbindung getrennt - Grace Period für Reconnection
     socket.on('disconnect', () => {
       console.log(`🔌 Verbindung getrennt: ${socket.id}`);
 
       if (socketData.playerId && socketData.roomId) {
-        const result = roomManager.leaveRoom(socketData.playerId);
+        const room = roomManager.getRoom(socketData.roomId);
+        const player = room?.players.get(socketData.playerId);
 
-        if (result) {
-          broadcastToRoom(socketData.roomId, {
-            type: 'player_left',
+        if (room && player) {
+          // Mark player as disconnected but keep them in the room
+          player.isConnected = false;
+
+          const playerId = socketData.playerId;
+          const roomId = socketData.roomId;
+
+          // Store reconnection info
+          disconnectedPlayers.set(playerId, {
+            roomId: room.id,
+            roomCode: room.code,
+            playerName: player.name,
+          });
+
+          console.log(`⏳ ${player.name} getrennt von Raum ${room.code} - ${DISCONNECT_GRACE_PERIOD_MS / 1000}s Grace Period`);
+
+          // Notify other players about the disconnection
+          broadcastToRoom(roomId, {
+            type: 'player_disconnected',
             payload: {
-              playerId: socketData.playerId,
-              newHostId: result.newHostId,
+              playerId,
+              playerName: player.name,
             },
           });
+
+          // Start grace period timer
+          const timer = setTimeout(() => {
+            disconnectTimers.delete(playerId);
+            disconnectedPlayers.delete(playerId);
+
+            // Check if player is still disconnected
+            const currentRoom = roomManager.getRoom(roomId);
+            const currentPlayer = currentRoom?.players.get(playerId);
+            if (currentPlayer && !currentPlayer.isConnected) {
+              console.log(`⌛ Grace Period abgelaufen für ${currentPlayer.name} in Raum ${currentRoom!.code}`);
+              const result = roomManager.leaveRoom(playerId);
+
+              if (result) {
+                broadcastToRoom(roomId, {
+                  type: 'player_left',
+                  payload: {
+                    playerId,
+                    newHostId: result.newHostId,
+                  },
+                });
+              } else {
+                // Room was deleted (no players left)
+                gameManager.endGame(roomId);
+                const pm = playlistManagers.get(roomId);
+                if (pm) {
+                  pm.destroy();
+                  playlistManagers.delete(roomId);
+                }
+              }
+            }
+          }, DISCONNECT_GRACE_PERIOD_MS);
+
+          disconnectTimers.set(playerId, timer);
         }
       }
     });

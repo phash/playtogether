@@ -8,6 +8,10 @@
     <!-- Vibration für Feedback -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Keep connection alive -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:name=".PlayTogetherApp"
         android:allowBackup="true"

@@ -1,5 +1,7 @@
 package com.playtogether.data.repository
 
+import android.util.Log
+import com.playtogether.data.api.ConnectionState
 import com.playtogether.data.api.SocketClient
 import com.playtogether.data.model.GameState
 import com.playtogether.data.model.Player
@@ -16,6 +18,8 @@ import kotlinx.coroutines.flow.onEach
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "GameRepository"
 
 /**
  * Repository für Spielzustand
@@ -45,13 +49,48 @@ class GameRepository @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    // Track if we intentionally left the room (vs disconnect)
+    private var intentionallyLeft = false
+
     init {
         observeMessages()
+        observeConnectionState()
     }
 
     private fun observeMessages() {
         socketClient.messages()
-            .onEach { message -> handleMessage(message) }
+            .onEach { message ->
+                try {
+                    handleMessage(message)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling message: ${message.type}", e)
+                }
+            }
+            .launchIn(scope)
+    }
+
+    private fun observeConnectionState() {
+        socketClient.connectionState
+            .onEach { state ->
+                when (state) {
+                    ConnectionState.RECONNECTING -> {
+                        Log.d(TAG, "Reconnecting... keeping room state")
+                        // Don't clear room state - keep it for the UI
+                    }
+                    ConnectionState.CONNECTED -> {
+                        Log.d(TAG, "Connected")
+                    }
+                    ConnectionState.DISCONNECTED -> {
+                        if (intentionallyLeft) {
+                            _room.value = null
+                            _playerId.value = null
+                            _gameState.value = null
+                        }
+                        // Don't clear state on unexpected disconnect - reconnect will restore it
+                    }
+                    else -> {}
+                }
+            }
             .launchIn(scope)
     }
 
@@ -59,8 +98,13 @@ class GameRepository @Inject constructor(
         when (message.type) {
             "room_created", "room_joined" -> {
                 val roomJson = message.payload.getJSONObject("room")
-                _room.value = parseRoom(roomJson)
+                val room = parseRoom(roomJson)
+                _room.value = room
                 _playerId.value = message.payload.getString("playerId")
+                // Store for auto-reconnect
+                socketClient.lastRoomCode = room.code
+                intentionallyLeft = false
+                Log.d(TAG, "Room ${room.code}: ${message.type} (status=${room.status})")
             }
 
             "room_updated" -> {
@@ -71,26 +115,36 @@ class GameRepository @Inject constructor(
             "player_joined" -> {
                 val playerJson = message.payload.getJSONObject("player")
                 val player = parsePlayer(playerJson)
-                _room.value = _room.value?.copy(
-                    players = _room.value!!.players + player
-                )
+                _room.value = _room.value?.let { room ->
+                    room.copy(players = room.players + player)
+                }
             }
 
             "player_left" -> {
                 val leftPlayerId = message.payload.getString("playerId")
-                _room.value = _room.value?.copy(
-                    players = _room.value!!.players.filter { it.id != leftPlayerId }
-                )
+                _room.value = _room.value?.let { room ->
+                    room.copy(players = room.players.filter { it.id != leftPlayerId })
+                }
             }
 
             "player_updated" -> {
                 val playerJson = message.payload.getJSONObject("player")
                 val updatedPlayer = parsePlayer(playerJson)
-                _room.value = _room.value?.copy(
-                    players = _room.value!!.players.map {
+                _room.value = _room.value?.let { room ->
+                    room.copy(players = room.players.map {
                         if (it.id == updatedPlayer.id) updatedPlayer else it
-                    }
-                )
+                    })
+                }
+            }
+
+            "player_disconnected" -> {
+                val playerName = message.payload.optString("playerName", "?")
+                Log.d(TAG, "Player disconnected: $playerName")
+            }
+
+            "player_reconnected" -> {
+                val playerName = message.payload.optString("playerName", "?")
+                Log.d(TAG, "Player reconnected: $playerName")
             }
 
             "game_starting" -> {
@@ -108,11 +162,27 @@ class GameRepository @Inject constructor(
             }
 
             "game_ended" -> {
+                _gameState.value = null
                 _room.value = _room.value?.copy(status = "finished")
             }
 
             "error" -> {
-                _error.value = message.payload.getString("message")
+                val errorMsg = message.payload.optString("message", "Unbekannter Fehler")
+                val errorCode = message.payload.optString("code", "")
+                Log.e(TAG, "Server error: $errorCode - $errorMsg")
+
+                // Don't show reconnect failures as errors to the user
+                if (errorCode == "RECONNECT_FAILED") {
+                    Log.d(TAG, "Reconnect failed - room may no longer exist")
+                    // Room is gone, clear state
+                    socketClient.lastRoomCode = null
+                    socketClient.lastPlayerName = null
+                    _room.value = null
+                    _playerId.value = null
+                    _gameState.value = null
+                } else {
+                    _error.value = errorMsg
+                }
             }
         }
     }
@@ -190,15 +260,22 @@ class GameRepository @Inject constructor(
     fun disconnect() = socketClient.disconnect()
 
     fun createRoom(playerName: String, gameType: String) {
+        socketClient.lastPlayerName = playerName
+        intentionallyLeft = false
         socketClient.createRoom(playerName, gameType)
     }
 
     fun joinRoom(code: String, playerName: String) {
+        socketClient.lastPlayerName = playerName
+        intentionallyLeft = false
         socketClient.joinRoom(code, playerName)
     }
 
     fun leaveRoom() {
+        intentionallyLeft = true
         socketClient.leaveRoom()
+        socketClient.lastRoomCode = null
+        socketClient.lastPlayerName = null
         _room.value = null
         _playerId.value = null
         _gameState.value = null

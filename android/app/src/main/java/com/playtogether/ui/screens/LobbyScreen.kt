@@ -27,14 +27,17 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import com.playtogether.BuildConfig
+import com.playtogether.data.api.ConnectionState
 import com.playtogether.data.model.GameType
 import com.playtogether.data.model.Player
 import com.playtogether.data.repository.GameRepository
 import com.playtogether.ui.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,6 +47,7 @@ class LobbyViewModel @Inject constructor(
 
     val room = repository.room
     val playerId = repository.playerId
+    val connectionState = repository.connectionState
 
     fun setReady(ready: Boolean) {
         repository.setReady(ready)
@@ -68,26 +72,52 @@ fun LobbyScreen(
 ) {
     val room by viewModel.room.collectAsState()
     val playerId by viewModel.playerId.collectAsState()
+    val connectionState by viewModel.connectionState.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
     var isReady by remember { mutableStateOf(false) }
 
+    val isReconnecting = connectionState == ConnectionState.RECONNECTING ||
+            connectionState == ConnectionState.CONNECTING
+
     // Navigate when game starts
     LaunchedEffect(room?.status) {
-        if (room?.status == "playing") {
+        if (room?.status == "playing" || room?.status == "starting") {
             onGameStart()
         }
     }
 
-    // Navigate back if room is gone
+    // Navigate back if room is gone - with grace period for reconnect
     LaunchedEffect(room) {
         if (room == null) {
-            onLeave()
+            // Wait a bit in case this is a reconnection
+            delay(5000)
+            // Check again after delay
+            if (viewModel.room.value == null) {
+                onLeave()
+            }
         }
     }
 
-    val currentRoom = room ?: return
+    val currentRoom = room ?: run {
+        // Show loading/reconnecting while waiting
+        Box(
+            modifier = Modifier.fillMaxSize().background(Background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Primary)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Verbinde...",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextSecondary
+                )
+            }
+        }
+        return
+    }
 
     val isHost = currentRoom.hostId == playerId
     val gameType = GameType.fromId(currentRoom.gameType)
@@ -275,6 +305,34 @@ fun LobbyScreen(
                     color = TextSecondary,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+            }
+        }
+    }
+
+    // Reconnecting overlay
+    if (isReconnecting) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = Primary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Verbindung wird wiederhergestellt...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary
+                    )
+                }
             }
         }
     }

@@ -90,6 +90,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     socket.on('connect', () => {
       console.log('🔌 Verbunden mit Server');
       set({ isConnected: true });
+
+      // Auto-reconnect: if we had a room, try to rejoin
+      const { room, playerName } = get();
+      if (room && playerName) {
+        console.log(`🔄 Versuche Reconnect zu Raum ${room.code}...`);
+        const message: ClientMessage = {
+          type: 'reconnect',
+          payload: {
+            code: room.code,
+            playerName,
+          },
+        };
+        socket.emit('message', message);
+      }
     });
 
     socket.on('disconnect', () => {
@@ -286,6 +300,16 @@ function handleServerMessage(
           },
         });
       }
+      break;
+    }
+
+    case 'player_disconnected': {
+      console.log(`⏳ Spieler ${(message.payload as any).playerName} getrennt`);
+      break;
+    }
+
+    case 'player_reconnected': {
+      console.log(`🔄 Spieler ${(message.payload as any).playerName} wiederverbunden`);
       break;
     }
 

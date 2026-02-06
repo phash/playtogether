@@ -13,6 +13,7 @@ export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
   | LeaveRoomMessage
+  | ReconnectMessage
   | SetReadyMessage
   | StartGameMessage
   | GameActionMessage
@@ -40,6 +41,14 @@ export interface JoinRoomMessage {
 
 export interface LeaveRoomMessage {
   type: 'leave_room';
+}
+
+export interface ReconnectMessage {
+  type: 'reconnect';
+  payload: {
+    code: string;
+    playerName: string;
+  };
 }
 
 export interface SetReadyMessage {
@@ -99,6 +108,8 @@ export type ServerMessage =
   | PlayerJoinedMessage
   | PlayerLeftMessage
   | PlayerUpdatedMessage
+  | PlayerDisconnectedMessage
+  | PlayerReconnectedMessage
   | GameStartingMessage
   | GameStateMessage
   | GameEndedMessage
@@ -146,6 +157,22 @@ export interface PlayerLeftMessage {
   payload: {
     playerId: string;
     newHostId?: string;
+  };
+}
+
+export interface PlayerDisconnectedMessage {
+  type: 'player_disconnected';
+  payload: {
+    playerId: string;
+    playerName: string;
+  };
+}
+
+export interface PlayerReconnectedMessage {
+  type: 'player_reconnected';
+  payload: {
+    playerId: string;
+    playerName: string;
   };
 }
 

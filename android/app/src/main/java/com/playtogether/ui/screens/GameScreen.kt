@@ -28,11 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.playtogether.data.api.ConnectionState
 import com.playtogether.data.model.GameState
 import com.playtogether.data.model.GameType
 import com.playtogether.data.repository.GameRepository
 import com.playtogether.ui.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import org.json.JSONObject
 import javax.inject.Inject
 
@@ -44,6 +46,7 @@ class GameViewModel @Inject constructor(
     val room = repository.room
     val playerId = repository.playerId
     val gameState = repository.gameState
+    val connectionState = repository.connectionState
 
     fun sendAction(action: String, data: JSONObject = JSONObject()) {
         repository.sendGameAction(action, data)
@@ -64,15 +67,38 @@ fun GameScreen(
     val room by viewModel.room.collectAsState()
     val playerId by viewModel.playerId.collectAsState()
     val gameState by viewModel.gameState.collectAsState()
+    val connectionState by viewModel.connectionState.collectAsState()
 
-    // Navigate back if room is gone
+    val isReconnecting = connectionState == ConnectionState.RECONNECTING ||
+            connectionState == ConnectionState.CONNECTING
+
+    // Navigate back if room is gone - with grace period for reconnect
     LaunchedEffect(room) {
         if (room == null) {
-            onGameEnd()
+            delay(5000)
+            if (viewModel.room.value == null) {
+                onGameEnd()
+            }
         }
     }
 
-    val currentRoom = room ?: return
+    val currentRoom = room ?: run {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Primary)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Verbinde...",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextSecondary
+                )
+            }
+        }
+        return
+    }
     val currentGameState = gameState
 
     val gameType = GameType.fromId(currentRoom.gameType)
@@ -210,6 +236,34 @@ fun GameScreen(
                 scores = currentGameState?.scores ?: emptyMap(),
                 currentPlayerId = playerId
             )
+        }
+    }
+
+    // Reconnecting overlay
+    if (isReconnecting) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = Primary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Verbindung wird wiederhergestellt...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary
+                    )
+                }
+            }
         }
     }
 }
