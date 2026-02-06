@@ -35,7 +35,7 @@ import monthlyRoutes from './routes/monthly.js';
 import { userService } from './services/UserService.js';
 import { monthlyScoreService } from './services/MonthlyScoreService.js';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3300;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const app = express();
@@ -149,7 +149,7 @@ app.get('/api/apk-info', (_req, res) => {
     modified: stats.mtime.toISOString(),
     md5: md5Hash,
     sha256: sha256Hash,
-    serverUrl: 'http://192.168.178.20:3003',
+    serverUrl: CLIENT_URL,
   });
 });
 

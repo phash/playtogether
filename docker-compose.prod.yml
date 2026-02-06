@@ -1,0 +1,29 @@
+# PlayTogether - Production Override for VPS Deployment
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d
+#
+# Architecture (with Nginx Proxy Manager):
+#   NPM (80/443, SSL) → playtogether.musikersuche.org → localhost:18080 (client nginx)
+#     → /socket.io/* → server:3001 (Docker-internal, WebSocket)
+#     → /api/*       → server:3001 (Docker-internal)
+#     → /download    → server:3001 (Docker-internal, APK)
+#     → /*           → static files (SPA)
+#
+# Ports are configured via .env.production:
+#   BIND_ADDR=127.0.0.1 (localhost only, accessed via NPM)
+#   CLIENT_PORT=18080
+#   SERVER_PORT=13001
+
+services:
+  server:
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CLIENT_URL=${CLIENT_URL:-https://playtogether.musikersuche.org}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+
+  client:
+    build:
+      args:
+        - VITE_SERVER_URL=${VITE_SERVER_URL:-https://playtogether.musikersuche.org}

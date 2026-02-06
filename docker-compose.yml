@@ -17,8 +17,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-playtogether}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    # No external port by default - only accessible within Docker network
+    # For local access, use docker-compose.dev.yml or add: ports: ["5432:5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-playtogether}"]
       interval: 10s
@@ -43,8 +43,7 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+    # No external port by default - only accessible within Docker network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -68,7 +67,7 @@ services:
     container_name: playtogether-server
     restart: unless-stopped
     ports:
-      - "${SERVER_PORT:-3001}:3001"
+      - "${BIND_ADDR:-0.0.0.0}:${SERVER_PORT:-3001}:3001"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=3001
@@ -107,7 +106,7 @@ services:
     container_name: playtogether-client
     restart: unless-stopped
     ports:
-      - "${CLIENT_PORT:-80}:80"
+      - "${BIND_ADDR:-0.0.0.0}:${CLIENT_PORT:-80}:80"
     depends_on:
       server:
         condition: service_healthy
