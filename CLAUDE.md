@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run Commands
 
 ```bash
-# Docker (recommended) - starts all services
+# Docker (recommended) - starts all services (postgres, redis, server, client)
 docker compose up -d
 docker compose up -d --build  # rebuild after changes
 docker compose logs -f        # view logs
@@ -14,27 +14,47 @@ docker compose logs -f        # view logs
 npm install
 npm run build:shared          # must build shared package first
 npm run dev                   # runs server + client concurrently
-
-# Individual services
 npm run dev:server            # server only (localhost:3001)
 npm run dev:client            # client only (localhost:5173)
 
-# Testing
+# Testing (vitest, config in vitest.config.ts)
 npm test                      # run all tests
 npm run test:watch            # watch mode
+npm run test:coverage         # with v8 coverage
+
+# Database (run from packages/server/)
+npx prisma migrate dev        # create/apply dev migration
+npx prisma migrate deploy     # apply migrations in production
+npx prisma db push            # push schema without migration
+npx prisma studio             # GUI for browsing data
+npx prisma generate           # regenerate client after schema changes
 
 # Android APK
 cd android && ./gradlew assembleDebug
 # Output: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+Makefile shortcuts for Docker: `make up`, `make down`, `make logs`, `make dev`, `make clean`, `make health`.
+
 ## Architecture
 
-### Monorepo Structure
-- `packages/shared/` - TypeScript types and utilities shared between server and client
-- `packages/server/` - Express + Socket.io backend with Prisma ORM
-- `packages/client/` - React + Vite frontend
+### Monorepo Structure (npm workspaces)
+- `packages/shared/` - TypeScript types and utilities (must build first: `npm run build:shared`)
+- `packages/server/` - Express + Socket.io backend with Prisma ORM (ESM, `"type": "module"`)
+- `packages/client/` - React + Vite + Zustand frontend
 - `android/` - Native Kotlin Android app with Jetpack Compose
+
+### Key Server Directories
+```
+packages/server/src/
+├── games/           # Game engines, GameManager, PlaylistManager
+├── rooms/           # RoomManager (room lifecycle, 4-char codes)
+├── socket/          # handlers.ts (all Socket.io message routing)
+├── services/        # Business logic (auth, stats, leaderboard)
+├── routes/          # REST API routes
+├── middleware/       # Auth, error handling
+└── db/              # Prisma client singleton
+```
 
 ### Game Engine Pattern
 All game engines extend `BaseGameEngine` in `packages/server/src/games/`:
@@ -49,28 +69,32 @@ class MyGameEngine extends BaseGameEngine {
 }
 ```
 
+`BaseGameEngine` provides: timer management (`startTimer`, `startCountdownTimer`), score tracking (`addScore`), speed bonus calculation (`calculateSpeedScore` for 1.0-2.0x multipliers), round advancement (`nextRound`), event emission (`emit`, `emitGameState`).
+
 To add a new game:
 1. Create engine class extending `BaseGameEngine`
-2. Register in `GameManager.ts` GAME_ENGINES map
+2. Register in `GameManager.ts` `GAME_ENGINES` map
 3. Export from `games/index.ts`
 4. Add types to `packages/shared/src/types/game.ts`
 
 ### Real-time Communication
-- Server uses Socket.io for WebSocket connections
-- Messages follow typed protocol defined in `packages/shared/src/types/messages.ts`
+- Server uses Socket.io (`packages/server/src/socket/handlers.ts` routes all messages)
+- Messages follow typed protocol in `packages/shared/src/types/messages.ts`
+- All messages go through a single `'message'` event with `{ type, payload }` structure
 - Client messages: `create_room`, `join_room`, `game_action`, `moody_update`, etc.
-- Server messages: `room_created`, `game_state`, `player_joined`, etc.
+- Server messages: `room_created`, `game_state`, `player_joined`, `timer_tick`, etc.
+- 30-second disconnect grace period before removing players (reconnect via `reconnect` message)
 
-### Room System
-- `RoomManager` handles room lifecycle (create, join, leave)
-- Rooms identified by 4-character codes
-- Players join via code, host controls game start
-- Room state broadcast to all players via Socket.io
+### Client State Management
+- Zustand store in `packages/client/src/store/gameStore.ts` manages all state
+- Socket connection, room state, game state, and actions all in one store
+- Game-specific React components in `packages/client/src/games/`
 
-### Playlist System
-- `PlaylistManager` in `packages/server/src/games/` manages multiple games in sequence
-- Cumulative scores across all games in a playlist
-- `IntermissionScreen` component shown between games with rankings and next game preview
+### Room & Playlist System
+- `RoomManager` handles room lifecycle (create, join, leave, reconnect)
+- Rooms identified by 4-character codes, host controls game start
+- `PlaylistManager` chains multiple games with cumulative scoring
+- Intermission screens between games show rankings and next game preview
 - Socket events: `intermission`, `timer_tick`, `playlist_ended`
 
 ### Scoring System
@@ -78,14 +102,18 @@ To add a new game:
 - Quiz Champ: streak bonuses (+25 at 3 correct, +50 at 5+)
 - Game-specific stats stored as JSON in `UserStats.gameSpecificStats`
 
-### Database (Prisma)
+### Database (Prisma + PostgreSQL)
 Schema in `packages/server/prisma/schema.prisma`:
-- `User` - accounts (can be guests)
-- `Moody` - avatar customization and XP
+- `User` / `Session` - accounts (can be guests) and auth sessions
+- `Moody` - avatar customization, XP, cosmetics, streaks
 - `UserStats` - game statistics (with `gameSpecificStats` JSON field)
 - `GameScore` - per-round scoring with base points and speed bonus
 - `MonthlyScore` / `CrownHolder` - monthly leaderboard system
 - `GameSession` / `GameParticipant` - game history
+- `Achievement` / `UserAchievement` - achievement system
+
+### Version Management
+`version.json` at repo root is the single source of truth for app version. Used by Vite build (injected as `__APP_VERSION__`) and Android build (`versionName` in `build.gradle.kts`).
 
 ## Environment Configuration
 
