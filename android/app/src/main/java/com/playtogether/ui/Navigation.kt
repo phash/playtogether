@@ -71,7 +71,9 @@ fun PlayTogetherNavigation() {
             GameScreen(
                 code = code,
                 onGameEnd = {
-                    navController.popBackStack(Screen.Home.route, inclusive = false)
+                    navController.navigate(Screen.Lobby.createRoute(code)) {
+                        popUpTo(Screen.Game.route) { inclusive = true }
+                    }
                 }
             )
         }

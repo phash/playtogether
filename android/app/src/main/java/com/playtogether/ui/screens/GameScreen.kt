@@ -82,6 +82,16 @@ fun GameScreen(
         }
     }
 
+    // Navigate back to lobby when game ends (status changes to finished/waiting)
+    LaunchedEffect(room?.status) {
+        val status = room?.status
+        if (status == "finished" || status == "waiting") {
+            // Small delay so players see the final state
+            delay(500)
+            onGameEnd()
+        }
+    }
+
     val currentRoom = room ?: run {
         Box(
             modifier = Modifier.fillMaxSize().background(Background),
