@@ -47,6 +47,14 @@ class GameRepository @Inject constructor(
     private val _gameState = MutableStateFlow<GameState?>(null)
     val gameState: StateFlow<GameState?> = _gameState
 
+    // Live timer (updated by timer_tick events)
+    private val _timerValue = MutableStateFlow(0)
+    val timerValue: StateFlow<Int> = _timerValue
+
+    // Raw game state JSON (for game-specific fields)
+    private val _rawGameState = MutableStateFlow<JSONObject?>(null)
+    val rawGameState: StateFlow<JSONObject?> = _rawGameState
+
     // Fehler
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
@@ -120,6 +128,8 @@ class GameRepository @Inject constructor(
                             _room.value = null
                             _playerId.value = null
                             _gameState.value = null
+                            _rawGameState.value = null
+                            _timerValue.value = 0
                         }
                     }
                     else -> {}
@@ -186,9 +196,15 @@ class GameRepository @Inject constructor(
                 _room.value = _room.value?.copy(status = "starting")
             }
 
+            "timer_tick" -> {
+                _timerValue.value = message.payload.optInt("timeRemaining", 0)
+            }
+
             "game_state" -> {
                 val stateJson = message.payload.getJSONObject("state")
                 _gameState.value = parseGameState(stateJson)
+                _rawGameState.value = stateJson
+                _timerValue.value = stateJson.optInt("timeRemaining", 0)
                 _room.value = _room.value?.copy(status = "playing")
             }
 
@@ -198,6 +214,8 @@ class GameRepository @Inject constructor(
 
             "game_ended" -> {
                 _gameState.value = null
+                _rawGameState.value = null
+                _timerValue.value = 0
                 _room.value = _room.value?.copy(status = "finished")
             }
 
@@ -214,6 +232,8 @@ class GameRepository @Inject constructor(
                     _room.value = null
                     _playerId.value = null
                     _gameState.value = null
+                    _rawGameState.value = null
+                    _timerValue.value = 0
                 } else {
                     _error.value = errorMsg
                 }
@@ -314,6 +334,8 @@ class GameRepository @Inject constructor(
         _room.value = null
         _playerId.value = null
         _gameState.value = null
+        _rawGameState.value = null
+        _timerValue.value = 0
     }
 
     fun setReady(ready: Boolean) = socketClient.setReady(ready)
