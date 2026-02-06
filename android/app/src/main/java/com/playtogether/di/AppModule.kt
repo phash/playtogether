@@ -21,8 +21,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideGameRepository(socketClient: SocketClient): GameRepository =
-        GameRepository(socketClient)
+    fun provideGameRepository(socketClient: SocketClient, userPreferences: UserPreferencesRepository): GameRepository =
+        GameRepository(socketClient, userPreferences)
 
     @Provides
     @Singleton

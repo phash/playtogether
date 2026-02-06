@@ -4,11 +4,11 @@ import android.util.Log
 import com.playtogether.BuildConfig
 import io.socket.client.IO
 import io.socket.client.Socket
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -47,6 +47,9 @@ class SocketClient @Inject constructor() {
     // Track if this is a reconnection (not first connect)
     private var hasConnectedBefore = false
 
+    // Message flow - uses replay=10 to buffer recent messages for late subscribers
+    private val _messages = MutableSharedFlow<ServerMessage>(replay = 10)
+
     /**
      * Verbindet zum Server
      */
@@ -83,14 +86,13 @@ class SocketClient @Inject constructor() {
                     _connectionState.value = ConnectionState.CONNECTED
                     _lastError.value = null
 
-                    // Auto-reconnect to last room if this is a reconnection
-                    if (hasConnectedBefore) {
-                        val code = lastRoomCode
-                        val name = lastPlayerName
-                        if (code != null && name != null) {
-                            Log.d(TAG, ">>> Auto-reconnecting to room $code as $name")
-                            reconnect(code, name)
-                        }
+                    // Auto-reconnect to last room (works for both socket reconnects
+                    // and fresh connects after process death if room info was restored)
+                    val code = lastRoomCode
+                    val name = lastPlayerName
+                    if (code != null && name != null) {
+                        Log.d(TAG, ">>> Auto-reconnecting to room $code as $name")
+                        reconnect(code, name)
                     }
                     hasConnectedBefore = true
                 }
@@ -136,6 +138,20 @@ class SocketClient @Inject constructor() {
                     Log.e(TAG, "Reconnect FAILED - all attempts exhausted")
                     _connectionState.value = ConnectionState.ERROR
                 }
+
+                // Register message listener immediately so no messages are lost
+                on("message") { args ->
+                    try {
+                        val json = args[0] as JSONObject
+                        val type = json.getString("type")
+                        val payload = json.optJSONObject("payload") ?: JSONObject()
+                        Log.d(TAG, "Received: $type")
+                        _messages.tryEmit(ServerMessage(type, payload))
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to parse message", e)
+                    }
+                }
+                Log.d(TAG, "Message listener registered on socket")
 
                 // Ping/pong logging for debugging
                 on("ping") {
@@ -277,28 +293,7 @@ class SocketClient @Inject constructor() {
     /**
      * Lauscht auf Server-Nachrichten als Flow
      */
-    fun messages(): Flow<ServerMessage> = callbackFlow {
-        val listener = { args: Array<Any> ->
-            try {
-                val json = args[0] as JSONObject
-                val type = json.getString("type")
-                val payload = json.optJSONObject("payload") ?: JSONObject()
-                Log.d(TAG, "Received: $type")
-                trySend(ServerMessage(type, payload))
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to parse message", e)
-            }
-            Unit
-        }
-
-        socket?.on("message", listener)
-        Log.d(TAG, "Message listener registered")
-
-        awaitClose {
-            socket?.off("message", listener)
-            Log.d(TAG, "Message listener removed")
-        }
-    }
+    fun messages(): Flow<ServerMessage> = _messages.asSharedFlow()
 
     /**
      * Server-Nachricht

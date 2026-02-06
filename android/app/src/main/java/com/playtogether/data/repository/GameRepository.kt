@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,7 +27,8 @@ private const val TAG = "GameRepository"
  */
 @Singleton
 class GameRepository @Inject constructor(
-    private val socketClient: SocketClient
+    private val socketClient: SocketClient,
+    private val userPreferences: UserPreferencesRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -55,6 +57,40 @@ class GameRepository @Inject constructor(
     init {
         observeMessages()
         observeConnectionState()
+        // Restore saved room info for auto-reconnect after process death
+        restoreSavedRoomInfo()
+    }
+
+    private fun restoreSavedRoomInfo() {
+        scope.launch {
+            try {
+                val savedCode = userPreferences.getLastRoomCode()
+                val savedName = userPreferences.getPlayerName()
+                if (savedCode != null && savedName != null) {
+                    Log.d(TAG, "Restored saved room info: code=$savedCode, name=$savedName")
+                    socketClient.lastRoomCode = savedCode
+                    socketClient.lastPlayerName = savedName
+                    // If socket is already connected (race condition after process death),
+                    // attempt reconnect immediately
+                    if (connectionState.value == ConnectionState.CONNECTED) {
+                        Log.d(TAG, "Socket already connected, attempting immediate reconnect to room $savedCode")
+                        socketClient.reconnect(savedCode, savedName)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to restore saved room info", e)
+            }
+        }
+    }
+
+    private fun persistRoomCode(code: String?) {
+        scope.launch {
+            try {
+                userPreferences.saveLastRoomCode(code)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to persist room code", e)
+            }
+        }
     }
 
     private fun observeMessages() {
@@ -75,7 +111,6 @@ class GameRepository @Inject constructor(
                 when (state) {
                     ConnectionState.RECONNECTING -> {
                         Log.d(TAG, "Reconnecting... keeping room state")
-                        // Don't clear room state - keep it for the UI
                     }
                     ConnectionState.CONNECTED -> {
                         Log.d(TAG, "Connected")
@@ -86,7 +121,6 @@ class GameRepository @Inject constructor(
                             _playerId.value = null
                             _gameState.value = null
                         }
-                        // Don't clear state on unexpected disconnect - reconnect will restore it
                     }
                     else -> {}
                 }
@@ -101,8 +135,9 @@ class GameRepository @Inject constructor(
                 val room = parseRoom(roomJson)
                 _room.value = room
                 _playerId.value = message.payload.getString("playerId")
-                // Store for auto-reconnect
+                // Store for auto-reconnect (in-memory + persistent)
                 socketClient.lastRoomCode = room.code
+                persistRoomCode(room.code)
                 intentionallyLeft = false
                 Log.d(TAG, "Room ${room.code}: ${message.type} (status=${room.status})")
             }
@@ -171,12 +206,11 @@ class GameRepository @Inject constructor(
                 val errorCode = message.payload.optString("code", "")
                 Log.e(TAG, "Server error: $errorCode - $errorMsg")
 
-                // Don't show reconnect failures as errors to the user
                 if (errorCode == "RECONNECT_FAILED") {
                     Log.d(TAG, "Reconnect failed - room may no longer exist")
-                    // Room is gone, clear state
                     socketClient.lastRoomCode = null
                     socketClient.lastPlayerName = null
+                    persistRoomCode(null)
                     _room.value = null
                     _playerId.value = null
                     _gameState.value = null
@@ -276,6 +310,7 @@ class GameRepository @Inject constructor(
         socketClient.leaveRoom()
         socketClient.lastRoomCode = null
         socketClient.lastPlayerName = null
+        persistRoomCode(null)
         _room.value = null
         _playerId.value = null
         _gameState.value = null

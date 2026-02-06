@@ -102,7 +102,7 @@ fun HomeScreen(
     val room by viewModel.room.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    // Navigate when room is created/joined
+    // Navigate when room is created/joined (including auto-reconnect after process death)
     LaunchedEffect(room) {
         room?.let { r ->
             if (viewModel.showCreateDialog) {
@@ -110,6 +110,9 @@ fun HomeScreen(
                 onRoomCreated(r.code)
             } else if (viewModel.showJoinDialog) {
                 viewModel.showJoinDialog = false
+                onRoomJoined(r.code)
+            } else {
+                // Auto-reconnect case: room restored without dialog open
                 onRoomJoined(r.code)
             }
         }
