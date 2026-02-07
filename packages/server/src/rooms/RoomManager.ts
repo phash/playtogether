@@ -48,6 +48,7 @@ export class RoomManager {
       avatarColor: getRandomAvatarColor(),
       isHost: true,
       isConnected: true,
+      isReady: false,
       score: 0,
       joinedAt: Date.now(),
     };
@@ -117,6 +118,7 @@ export class RoomManager {
       avatarColor: getRandomAvatarColor(),
       isHost: false,
       isConnected: true,
+      isReady: false,
       score: 0,
       joinedAt: Date.now(),
     };
@@ -238,7 +240,7 @@ export class RoomManager {
       avatarColor: p.avatarColor,
       isHost: p.isHost,
       score: p.score,
-      isReady: false,
+      isReady: p.isReady,
     }));
 
     return {

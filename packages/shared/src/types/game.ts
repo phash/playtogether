@@ -10,7 +10,10 @@ export type GameType =
   | 'gluecksrad'
   | 'tic_tac_toe'
   | 'rock_paper_scissors'
-  | 'hangman';
+  | 'hangman'
+  | 'reaction_test'
+  | 'word_guess'
+  | 'emoji_draw';
 
 export interface GameInfo {
   type: GameType;
@@ -106,6 +109,39 @@ export const AVAILABLE_GAMES: GameInfo[] = [
     category: 'word',
     defaultRounds: 5,
     defaultTime: 60,
+  },
+  {
+    type: 'reaction_test',
+    name: 'Reaktions-Test',
+    description: 'Reagiere so schnell wie möglich auf das Signal!',
+    minPlayers: 2,
+    maxPlayers: 8,
+    icon: '⚡',
+    category: 'classic',
+    defaultRounds: 5,
+    defaultTime: 10,
+  },
+  {
+    type: 'word_guess',
+    name: 'Wort-Raten',
+    description: 'Erkläre Wörter und lass deine Freunde raten!',
+    minPlayers: 4,
+    maxPlayers: 12,
+    icon: '💬',
+    category: 'word',
+    defaultRounds: 8,
+    defaultTime: 60,
+  },
+  {
+    type: 'emoji_draw',
+    name: 'Emoji Malen',
+    description: 'Male mit Emojis und lass andere raten!',
+    minPlayers: 3,
+    maxPlayers: 10,
+    icon: '🎨',
+    category: 'party',
+    defaultRounds: 8,
+    defaultTime: 90,
   },
 ];
 
@@ -298,6 +334,71 @@ export interface HangmanGameState extends GameState {
 }
 
 // ============================================
+// REAKTIONS-TEST
+// ============================================
+
+export interface ReactionTestRoundResult {
+  playerId: string;
+  reactionTimeMs: number | null; // null = false start
+  points: number;
+}
+
+export interface ReactionTestGameState extends GameState {
+  type: 'reaction_test';
+  signalActive: boolean;
+  reactionTimes: Record<string, number | null>; // playerId -> ms or null (false start)
+  falseStarts: Record<string, boolean>;
+  roundResults: ReactionTestRoundResult[];
+  allReacted: boolean;
+}
+
+// ============================================
+// WORT-RATEN
+// ============================================
+
+export interface WordGuessEntry {
+  playerId: string;
+  guess: string;
+  correct: boolean;
+  timestamp: number;
+}
+
+export interface WordGuessGameState extends GameState {
+  type: 'word_guess';
+  explainerId: string;
+  word: string; // visible to all, client hides for non-explainer
+  wordLength: number;
+  category: string;
+  guesses: WordGuessEntry[];
+  solved: boolean;
+  solvedBy?: string;
+  playerOrder: string[];
+  skipped: boolean;
+}
+
+// ============================================
+// EMOJI MALEN
+// ============================================
+
+export interface EmojiPlacement {
+  emoji: string;
+  position: number; // index in grid (0-15 for 4x4)
+}
+
+export interface EmojiDrawGameState extends GameState {
+  type: 'emoji_draw';
+  drawerId: string;
+  word: string; // visible to all, client hides for non-drawer
+  category: string;
+  emojiBoard: (string | null)[]; // 16 cells (4x4)
+  guesses: WordGuessEntry[]; // reuse same structure
+  solved: boolean;
+  solvedBy?: string;
+  playerOrder: string[];
+  availableEmojis: string[];
+}
+
+// ============================================
 // Union Type für alle Spielzustände
 // ============================================
 
@@ -308,4 +409,7 @@ export type AnyGameState =
   | GluecksradGameState
   | TicTacToeGameState
   | RockPaperScissorsGameState
-  | HangmanGameState;
+  | HangmanGameState
+  | ReactionTestGameState
+  | WordGuessGameState
+  | EmojiDrawGameState;

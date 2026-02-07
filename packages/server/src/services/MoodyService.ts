@@ -6,6 +6,7 @@ import { prisma } from '../db/prisma.js';
 import type { Moody, UserStats } from '@prisma/client';
 import type { MoodLevel, EquippedCosmetics } from '@playtogether/shared';
 import { getLevelFromXp, MOODY_CONFIG, COSMETICS, canUnlockCosmetic } from '@playtogether/shared';
+import { achievementService } from './AchievementService.js';
 
 export class MoodyService {
   /**
@@ -113,6 +114,7 @@ export class MoodyService {
       // Skip if already unlocked
       if (moody.unlockedCosmetics.includes(item.id)) continue;
 
+      const unlockedAchievements = await achievementService.getUnlockedAchievementCodes(userId);
       const canUnlock = canUnlockCosmetic(item, {
         gamesPlayed: stats.gamesPlayed,
         gamesWon: stats.gamesWon,
@@ -120,7 +122,7 @@ export class MoodyService {
         reactionsReceived: stats.reactionsReceived,
         currentStreak: moody.currentStreak,
         level,
-        achievements: [], // TODO: Load achievements
+        achievements: unlockedAchievements,
       });
 
       if (canUnlock) {

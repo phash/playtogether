@@ -176,7 +176,7 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
               avatarColor: player.avatarColor,
               isHost: player.isHost,
               score: player.score,
-              isReady: false,
+              isReady: player.isReady,
             },
           },
         });
@@ -230,6 +230,9 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
       const player = room.players.get(socketData.playerId);
       if (!player) return;
 
+      // Persist the ready state
+      player.isReady = payload.ready;
+
       broadcastToRoom(socketData.roomId, {
         type: 'player_updated',
         payload: {
@@ -239,7 +242,7 @@ export function setupSocketHandlers(io: Server, roomManager: RoomManager): void 
             avatarColor: player.avatarColor,
             isHost: player.isHost,
             score: player.score,
-            isReady: payload.ready,
+            isReady: player.isReady,
           },
         },
       });

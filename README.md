@@ -8,8 +8,11 @@ Eine Multiplayer-Plattform für kleine Spiele, die man gemeinsam über Smartphon
 - **Mobile-First Design** - optimiert für Smartphones
 - **Native Android App** mit Jetpack Compose
 - **Raum-System** mit einfachen 4-stelligen Codes
-- **9 Spielmodi** in 3 Kategorien (Klassisch, Party, Wort-Spiele)
+- **10 Spielmodi** in 3 Kategorien (Klassisch, Party, Wort-Spiele)
 - **Moody-System** - Virtuelles Haustier mit Belohnungen
+- **Achievement-System** - 18 Achievements zum Freischalten
+- **Freundschafts-System** - Freunde hinzufuegen und verwalten
+- **Playlist-System** - Mehrere Spiele hintereinander spielen
 
 ## Projektstruktur
 
@@ -127,28 +130,29 @@ curl http://localhost:3001/api/health
 curl http://localhost/health
 ```
 
-## Verfügbare Spiele
+## Verfuegbare Spiele (10)
 
 ### Klassische Spiele
-| Spiel | Status | Spieler | Beschreibung |
-|-------|--------|---------|--------------|
-| Quiz Battle | ✅ Fertig | 2-8 | 100 Fragen, 20s Timer, Feedback-System |
-| Kritzel & Rate | 🚧 Geplant | 3-10 | Zeichnen und Raten |
-| Wort-Raten | 🚧 Geplant | 4-12 | Wörter erklären |
-| Reaktions-Test | 🚧 Geplant | 2-8 | Schnellste Reflexe |
+| Spiel | Spieler | Beschreibung |
+|-------|---------|--------------|
+| Quiz Champ | 2-8 | 145 Fragen, 20s Timer, Streak-Bonus |
+| Tic Tac Toe | 2-8 | Klassisches Strategiespiel im Turniermodus |
+| Schere Stein Papier | 2-16 | Turnier-Paarungen |
+| Reaktions-Test | 2-8 | Reagiere so schnell wie moeglich auf das Signal |
 
-### Party & Spaß
-| Spiel | Status | Spieler | Beschreibung |
-|-------|--------|---------|--------------|
-| Würdest du eher? | ✅ Fertig | 2-12 | Wähle zwischen zwei Optionen |
-| Wer würde am ehesten? | ✅ Fertig | 3-10 | Stimme für Mitspieler ab |
-| Entweder/Oder | ✅ Fertig | 2-20 | Schnelle Entscheidungen |
+### Party & Spass
+| Spiel | Spieler | Beschreibung |
+|-------|---------|--------------|
+| Entweder/Oder | 3-20 | Was waehlt die Mehrheit? Stimme ab! |
+| Gluecksrad | 2-6 | Drehe das Rad und loese die Phrase |
+| Emoji Malen | 3-10 | Male mit Emojis und lass andere raten |
 
 ### Wort-Spiele
-| Spiel | Status | Spieler | Beschreibung |
-|-------|--------|---------|--------------|
-| Wortkette | ✅ Fertig | 2-8 | Letzter Buchstabe = Erster des nächsten |
-| Anagramme | ✅ Fertig | 2-8 | Bilde Wörter aus Buchstaben |
+| Spiel | Spieler | Beschreibung |
+|-------|---------|--------------|
+| Anagramme | 2-8 | Entwirre das verwuerfelte Wort |
+| Galgenmaennchen | 2-8 | Errate das Wort Buchstabe fuer Buchstabe |
+| Wort-Raten | 4-12 | Erklaere Woerter und lass Freunde raten |
 
 ## Android App
 

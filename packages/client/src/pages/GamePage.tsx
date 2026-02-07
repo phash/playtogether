@@ -13,6 +13,9 @@ import GluecksradGame from '../games/GluecksradGame';
 import TicTacToeGame from '../games/TicTacToeGame';
 import RockPaperScissorsGame from '../games/RockPaperScissorsGame';
 import HangmanGame from '../games/HangmanGame';
+import ReactionTestGame from '../games/ReactionTestGame';
+import WordGuessGame from '../games/WordGuessGame';
+import EmojiDrawGame from '../games/EmojiDrawGame';
 import ResultsScreen from '../components/ResultsScreen';
 import VoteScreen from '../components/VoteScreen';
 import SessionEndScreen from '../components/SessionEndScreen';
@@ -101,6 +104,12 @@ export default function GamePage() {
         return <RockPaperScissorsGame />;
       case 'hangman':
         return <HangmanGame />;
+      case 'reaction_test':
+        return <ReactionTestGame />;
+      case 'word_guess':
+        return <WordGuessGame />;
+      case 'emoji_draw':
+        return <EmojiDrawGame />;
       default:
         return (
           <div className="card text-center" style={{ marginTop: '2rem', padding: '3rem' }}>

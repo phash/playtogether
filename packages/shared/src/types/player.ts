@@ -8,6 +8,7 @@ export interface Player {
   avatarColor: string;
   isHost: boolean;
   isConnected: boolean;
+  isReady: boolean;
   score: number;
   joinedAt: number;
 }

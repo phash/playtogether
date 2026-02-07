@@ -10,7 +10,7 @@ import { getGameInfo } from '@playtogether/shared';
 export default function LobbyPage() {
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
-  const { room, playerId, countdown, leaveRoom, startGame } = useGameStore();
+  const { room, playerId, countdown, leaveRoom, startGame, setReady } = useGameStore();
 
   // Redirect wenn kein Raum
   useEffect(() => {
@@ -143,6 +143,17 @@ export default function LobbyPage() {
                 {player.id === playerId && ' (Du)'}
               </span>
               {player.isHost && <span className="player-badge">Host</span>}
+              {!player.isHost && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '999px',
+                  background: player.isReady ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                  color: player.isReady ? 'var(--success)' : 'var(--warning)',
+                }}>
+                  {player.isReady ? 'Bereit' : 'Wartet'}
+                </span>
+              )}
             </div>
           ))}
 
@@ -183,12 +194,26 @@ export default function LobbyPage() {
           </button>
         </>
       ) : (
-        <div
-          className="card text-center"
-          style={{ background: 'rgba(99, 102, 241, 0.1)' }}
-        >
-          <p>Warte auf Host...</p>
-        </div>
+        <>
+          {(() => {
+            const me = room.players.find((p) => p.id === playerId);
+            const amReady = me?.isReady ?? false;
+            return (
+              <button
+                className={amReady ? 'btn btn-secondary mb-2' : 'btn btn-success mb-2'}
+                onClick={() => setReady(!amReady)}
+              >
+                {amReady ? 'Nicht mehr bereit' : 'Bereit!'}
+              </button>
+            );
+          })()}
+          <div
+            className="card text-center"
+            style={{ background: 'rgba(99, 102, 241, 0.1)' }}
+          >
+            <p>Warte auf Host...</p>
+          </div>
+        </>
       )}
 
       <button

@@ -30,6 +30,8 @@ import authRoutes from './routes/auth.js';
 import moodyRoutes from './routes/moody.js';
 import statsRoutes from './routes/stats.js';
 import monthlyRoutes from './routes/monthly.js';
+import achievementRoutes from './routes/achievements.js';
+import friendRoutes from './routes/friends.js';
 
 // Services
 import { userService } from './services/UserService.js';
@@ -103,6 +105,12 @@ app.use('/api/stats', statsRoutes);
 
 // Monthly leaderboard routes
 app.use('/api/monthly', monthlyRoutes);
+
+// Achievement routes
+app.use('/api/achievements', achievementRoutes);
+
+// Friend routes
+app.use('/api/friends', friendRoutes);
 
 // Games list
 app.get('/api/games', (_req, res) => {

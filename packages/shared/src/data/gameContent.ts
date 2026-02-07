@@ -498,6 +498,174 @@ export const QUIZ_CHAMP_QUESTIONS: QuizChampQuestion[] = [
 // ENTWEDER/ODER - Fragen
 // ============================================
 
+// ============================================
+// WORT-RATEN - Wörter zum Erklären
+// ============================================
+
+export interface WordGuessWordEntry {
+  word: string;
+  category: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  tabooWords: string[];
+}
+
+export const WORD_GUESS_WORDS: WordGuessWordEntry[] = [
+  // Leicht
+  { word: 'Hund', category: 'Tiere', difficulty: 'easy', tabooWords: ['bellen', 'Haustier', 'Welpe'] },
+  { word: 'Schule', category: 'Alltag', difficulty: 'easy', tabooWords: ['lernen', 'Lehrer', 'Unterricht'] },
+  { word: 'Pizza', category: 'Essen', difficulty: 'easy', tabooWords: ['Italien', 'Käse', 'Teig'] },
+  { word: 'Fußball', category: 'Sport', difficulty: 'easy', tabooWords: ['Tor', 'Ball', 'Mannschaft'] },
+  { word: 'Weihnachten', category: 'Feiern', difficulty: 'easy', tabooWords: ['Geschenke', 'Baum', 'Dezember'] },
+  { word: 'Auto', category: 'Verkehr', difficulty: 'easy', tabooWords: ['fahren', 'Motor', 'Straße'] },
+  { word: 'Geburtstag', category: 'Feiern', difficulty: 'easy', tabooWords: ['Kuchen', 'Geschenk', 'feiern'] },
+  { word: 'Smartphone', category: 'Technik', difficulty: 'easy', tabooWords: ['Handy', 'App', 'telefonieren'] },
+  { word: 'Bett', category: 'Haus', difficulty: 'easy', tabooWords: ['schlafen', 'Kissen', 'Matratze'] },
+  { word: 'Zahnarzt', category: 'Beruf', difficulty: 'easy', tabooWords: ['Zähne', 'bohren', 'Praxis'] },
+  { word: 'Urlaub', category: 'Freizeit', difficulty: 'easy', tabooWords: ['Reise', 'Strand', 'frei'] },
+  { word: 'Supermarkt', category: 'Alltag', difficulty: 'easy', tabooWords: ['einkaufen', 'Kasse', 'Regal'] },
+  { word: 'Fahrrad', category: 'Verkehr', difficulty: 'easy', tabooWords: ['Rad', 'fahren', 'Pedal'] },
+  { word: 'Regenschirm', category: 'Gegenstände', difficulty: 'easy', tabooWords: ['Regen', 'nass', 'Schirm'] },
+  { word: 'Kino', category: 'Freizeit', difficulty: 'easy', tabooWords: ['Film', 'Popcorn', 'Leinwand'] },
+  { word: 'Polizei', category: 'Beruf', difficulty: 'easy', tabooWords: ['Verbrechen', 'Uniform', 'Streife'] },
+  { word: 'Schokolade', category: 'Essen', difficulty: 'easy', tabooWords: ['süß', 'Kakao', 'Tafel'] },
+  { word: 'Fernseher', category: 'Technik', difficulty: 'easy', tabooWords: ['gucken', 'Programm', 'Bildschirm'] },
+  { word: 'Strand', category: 'Natur', difficulty: 'easy', tabooWords: ['Sand', 'Meer', 'Wasser'] },
+  { word: 'Kühlschrank', category: 'Haus', difficulty: 'easy', tabooWords: ['kalt', 'Essen', 'Küche'] },
+  { word: 'Schwimmbad', category: 'Freizeit', difficulty: 'easy', tabooWords: ['schwimmen', 'Wasser', 'Pool'] },
+  { word: 'Hochzeit', category: 'Feiern', difficulty: 'easy', tabooWords: ['heiraten', 'Braut', 'Ring'] },
+  { word: 'Arzt', category: 'Beruf', difficulty: 'easy', tabooWords: ['krank', 'Medizin', 'heilen'] },
+  { word: 'Schlüssel', category: 'Gegenstände', difficulty: 'easy', tabooWords: ['Tür', 'Schloss', 'öffnen'] },
+  { word: 'Flugzeug', category: 'Verkehr', difficulty: 'easy', tabooWords: ['fliegen', 'Himmel', 'Pilot'] },
+  // Mittel
+  { word: 'Vorstellungsgespräch', category: 'Beruf', difficulty: 'medium', tabooWords: ['Job', 'Bewerbung', 'Arbeit'] },
+  { word: 'Sonnenbrille', category: 'Gegenstände', difficulty: 'medium', tabooWords: ['Sonne', 'Augen', 'tragen'] },
+  { word: 'Bibliothek', category: 'Gebäude', difficulty: 'medium', tabooWords: ['Buch', 'lesen', 'ausleihen'] },
+  { word: 'Staubsauger', category: 'Haus', difficulty: 'medium', tabooWords: ['saugen', 'Dreck', 'putzen'] },
+  { word: 'Silvester', category: 'Feiern', difficulty: 'medium', tabooWords: ['Neujahr', 'Rakete', 'Feuerwerk'] },
+  { word: 'Waschmaschine', category: 'Haus', difficulty: 'medium', tabooWords: ['waschen', 'Kleidung', 'drehen'] },
+  { word: 'Ampel', category: 'Verkehr', difficulty: 'medium', tabooWords: ['rot', 'grün', 'Kreuzung'] },
+  { word: 'Dachboden', category: 'Haus', difficulty: 'medium', tabooWords: ['oben', 'Haus', 'Speicher'] },
+  { word: 'Taschenrechner', category: 'Technik', difficulty: 'medium', tabooWords: ['rechnen', 'Zahlen', 'Mathematik'] },
+  { word: 'Aquarium', category: 'Haus', difficulty: 'medium', tabooWords: ['Fisch', 'Wasser', 'Glas'] },
+  { word: 'Fallschirm', category: 'Abenteuer', difficulty: 'medium', tabooWords: ['springen', 'fliegen', 'Luft'] },
+  { word: 'Mikrowelle', category: 'Haus', difficulty: 'medium', tabooWords: ['warm', 'Essen', 'Küche'] },
+  { word: 'Freundschaft', category: 'Beziehung', difficulty: 'medium', tabooWords: ['Freund', 'zusammen', 'mögen'] },
+  { word: 'Kopfhörer', category: 'Technik', difficulty: 'medium', tabooWords: ['Musik', 'hören', 'Ohr'] },
+  { word: 'Lagerfeuer', category: 'Freizeit', difficulty: 'medium', tabooWords: ['Feuer', 'brennen', 'Holz'] },
+  { word: 'Briefkasten', category: 'Alltag', difficulty: 'medium', tabooWords: ['Post', 'Brief', 'einwerfen'] },
+  { word: 'Spülmaschine', category: 'Haus', difficulty: 'medium', tabooWords: ['Geschirr', 'spülen', 'Wasser'] },
+  { word: 'Autobahn', category: 'Verkehr', difficulty: 'medium', tabooWords: ['schnell', 'fahren', 'Straße'] },
+  { word: 'Karneval', category: 'Feiern', difficulty: 'medium', tabooWords: ['Kostüm', 'feiern', 'Fasching'] },
+  { word: 'Achterbahn', category: 'Freizeit', difficulty: 'medium', tabooWords: ['Freizeitpark', 'fahren', 'schnell'] },
+  { word: 'Wanderschuhe', category: 'Kleidung', difficulty: 'medium', tabooWords: ['wandern', 'Berg', 'Fuß'] },
+  { word: 'Nachbar', category: 'Menschen', difficulty: 'medium', tabooWords: ['wohnen', 'nebenan', 'Haus'] },
+  { word: 'Thermometer', category: 'Gegenstände', difficulty: 'medium', tabooWords: ['Temperatur', 'messen', 'Grad'] },
+  { word: 'Briefmarke', category: 'Alltag', difficulty: 'medium', tabooWords: ['Post', 'kleben', 'Brief'] },
+  { word: 'Joghurt', category: 'Essen', difficulty: 'medium', tabooWords: ['Milch', 'essen', 'Becher'] },
+  // Schwer
+  { word: 'Zeitumstellung', category: 'Alltag', difficulty: 'hard', tabooWords: ['Uhr', 'Sommer', 'Winter'] },
+  { word: 'Heimweh', category: 'Gefühle', difficulty: 'hard', tabooWords: ['Zuhause', 'vermissen', 'traurig'] },
+  { word: 'Schweigepflicht', category: 'Recht', difficulty: 'hard', tabooWords: ['Arzt', 'Geheimnis', 'reden'] },
+  { word: 'Phantasie', category: 'Konzepte', difficulty: 'hard', tabooWords: ['vorstellen', 'träumen', 'Idee'] },
+  { word: 'Gleichgewicht', category: 'Konzepte', difficulty: 'hard', tabooWords: ['Balance', 'fallen', 'stabil'] },
+  { word: 'Fernweh', category: 'Gefühle', difficulty: 'hard', tabooWords: ['reisen', 'Sehnsucht', 'fern'] },
+  { word: 'Ohrwurm', category: 'Alltag', difficulty: 'hard', tabooWords: ['Lied', 'Kopf', 'Musik'] },
+  { word: 'Schadenfreude', category: 'Gefühle', difficulty: 'hard', tabooWords: ['lachen', 'Unglück', 'freuen'] },
+  { word: 'Fingerspitzengefühl', category: 'Konzepte', difficulty: 'hard', tabooWords: ['Gefühl', 'vorsichtig', 'feinfühlig'] },
+  { word: 'Brückentag', category: 'Alltag', difficulty: 'hard', tabooWords: ['Feiertag', 'frei', 'Urlaub'] },
+  { word: 'Schluckauf', category: 'Körper', difficulty: 'hard', tabooWords: ['Hicks', 'Luft', 'Zwerchfell'] },
+  { word: 'Gänsehaut', category: 'Körper', difficulty: 'hard', tabooWords: ['Haut', 'kalt', 'Angst'] },
+  { word: 'Weltanschauung', category: 'Konzepte', difficulty: 'hard', tabooWords: ['Meinung', 'Welt', 'denken'] },
+  { word: 'Bauchgefühl', category: 'Gefühle', difficulty: 'hard', tabooWords: ['Intuition', 'fühlen', 'Instinkt'] },
+  { word: 'Frühjahrsmüdigkeit', category: 'Gesundheit', difficulty: 'hard', tabooWords: ['müde', 'Frühling', 'schlafen'] },
+  { word: 'Torschlusspanik', category: 'Gefühle', difficulty: 'hard', tabooWords: ['Angst', 'spät', 'verpassen'] },
+  { word: 'Backpfeifengesicht', category: 'Umgangssprache', difficulty: 'hard', tabooWords: ['Gesicht', 'Ohrfeige', 'nervig'] },
+  { word: 'Doppelgänger', category: 'Konzepte', difficulty: 'hard', tabooWords: ['gleich', 'aussehen', 'Zwilling'] },
+  { word: 'Schnappsidee', category: 'Umgangssprache', difficulty: 'hard', tabooWords: ['Idee', 'verrückt', 'spontan'] },
+  { word: 'Kuddelmuddel', category: 'Umgangssprache', difficulty: 'hard', tabooWords: ['Durcheinander', 'Chaos', 'Unordnung'] },
+];
+
+export function getRandomWordGuessWords(count: number): WordGuessWordEntry[] {
+  return shuffleArray([...WORD_GUESS_WORDS]).slice(0, count);
+}
+
+// ============================================
+// EMOJI MALEN - Wörter + Emoji-Palette
+// ============================================
+
+export const EMOJI_DRAW_WORDS: { word: string; category: string }[] = [
+  // Tiere
+  { word: 'Katze', category: 'Tiere' },
+  { word: 'Hund', category: 'Tiere' },
+  { word: 'Fisch', category: 'Tiere' },
+  { word: 'Vogel', category: 'Tiere' },
+  { word: 'Schmetterling', category: 'Tiere' },
+  { word: 'Frosch', category: 'Tiere' },
+  { word: 'Biene', category: 'Tiere' },
+  { word: 'Elefant', category: 'Tiere' },
+  { word: 'Pinguin', category: 'Tiere' },
+  { word: 'Delfin', category: 'Tiere' },
+  // Essen
+  { word: 'Pizza', category: 'Essen' },
+  { word: 'Burger', category: 'Essen' },
+  { word: 'Kuchen', category: 'Essen' },
+  { word: 'Eis', category: 'Essen' },
+  { word: 'Sushi', category: 'Essen' },
+  { word: 'Frühstück', category: 'Essen' },
+  { word: 'Suppe', category: 'Essen' },
+  { word: 'Salat', category: 'Essen' },
+  { word: 'Popcorn', category: 'Essen' },
+  { word: 'Schokolade', category: 'Essen' },
+  // Orte
+  { word: 'Strand', category: 'Orte' },
+  { word: 'Schule', category: 'Orte' },
+  { word: 'Krankenhaus', category: 'Orte' },
+  { word: 'Bauernhof', category: 'Orte' },
+  { word: 'Dschungel', category: 'Orte' },
+  { word: 'Weltraum', category: 'Orte' },
+  { word: 'Gebirge', category: 'Orte' },
+  { word: 'Unterwasser', category: 'Orte' },
+  { word: 'Zirkus', category: 'Orte' },
+  { word: 'Wüste', category: 'Orte' },
+  // Aktivitäten
+  { word: 'Geburtstag', category: 'Aktivitäten' },
+  { word: 'Camping', category: 'Aktivitäten' },
+  { word: 'Angeln', category: 'Aktivitäten' },
+  { word: 'Kochen', category: 'Aktivitäten' },
+  { word: 'Fußball', category: 'Aktivitäten' },
+  { word: 'Tanzen', category: 'Aktivitäten' },
+  { word: 'Konzert', category: 'Aktivitäten' },
+  { word: 'Rennen', category: 'Aktivitäten' },
+  { word: 'Hochzeit', category: 'Aktivitäten' },
+  { word: 'Gartenarbeit', category: 'Aktivitäten' },
+  // Konzepte
+  { word: 'Regen', category: 'Konzepte' },
+  { word: 'Nacht', category: 'Konzepte' },
+  { word: 'Winter', category: 'Konzepte' },
+  { word: 'Sommer', category: 'Konzepte' },
+  { word: 'Gewitter', category: 'Konzepte' },
+  { word: 'Sonnenuntergang', category: 'Konzepte' },
+  { word: 'Feuerwerk', category: 'Konzepte' },
+  { word: 'Regenbogen', category: 'Konzepte' },
+  { word: 'Weihnachten', category: 'Konzepte' },
+  { word: 'Halloween', category: 'Konzepte' },
+];
+
+export function getRandomEmojiDrawWords(count: number): { word: string; category: string }[] {
+  return shuffleArray([...EMOJI_DRAW_WORDS]).slice(0, count);
+}
+
+export const EMOJI_PALETTE: Record<string, string[]> = {
+  'Tiere': ['🐱', '🐶', '🐟', '🐦', '🦋', '🐸', '🐝', '🐘', '🐧', '🐬', '🐻', '🐍', '🦁', '🐔'],
+  'Essen': ['🍕', '🍔', '🎂', '🍦', '🍣', '🥗', '🍿', '🍫', '🍎', '☕', '🍳', '🥤', '🌽', '🧀'],
+  'Natur': ['🌳', '🌊', '☀️', '🌙', '⭐', '🌈', '❄️', '🔥', '🌸', '🍄', '⛰️', '🌵', '💧', '☁️'],
+  'Objekte': ['🏠', '🚗', '✈️', '⛵', '🎸', '📱', '💡', '🔑', '⚽', '🎁', '🏆', '💎', '🔔', '📚'],
+  'Personen': ['👶', '👧', '👦', '👨', '👩', '👴', '👸', '🤴', '🧙', '👻', '🎅', '💃', '🧑‍🍳', '👮'],
+  'Symbole': ['❤️', '💀', '🎵', '💰', '⚡', '🎯', '🚫', '✅', '❓', '💤', '🎬', '🌍', '⏰', '🏳️'],
+};
+
+export const ALL_EMOJIS = Object.values(EMOJI_PALETTE).flat();
+
 export const ENTWEDER_ODER_QUESTIONS: EntwederOderQuestion[] = [
   // Essen
   { id: 'eo1', optionA: 'Pizza', optionB: 'Burger', category: 'Essen' },

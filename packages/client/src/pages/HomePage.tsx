@@ -237,6 +237,17 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Friends Link */}
+      <div className="text-center" style={{ marginTop: '1.5rem' }}>
+        <button
+          className="btn btn-secondary"
+          onClick={() => navigate('/friends')}
+          style={{ fontSize: '0.9rem' }}
+        >
+          Freunde verwalten
+        </button>
+      </div>
+
       {/* Version Footer */}
       <div
         className="text-center text-secondary"

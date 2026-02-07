@@ -143,6 +143,9 @@ Key variables in `.env` (see `.env.example`):
 | `tic_tac_toe` | TicTacToeEngine | Tic-tac-toe with tournament brackets |
 | `rock_paper_scissors` | RockPaperScissorsEngine | Rock-paper-scissors tournament |
 | `hangman` | HangmanEngine | Cooperative hangman word guessing |
+| `reaction_test` | ReactionTestEngine | Reaction speed test with random signal |
+| `word_guess` | WordGuessEngine | Explain words for others to guess |
+| `emoji_draw` | EmojiDrawEngine | Draw with emojis on a 4x4 grid |
 
 ### Game Content
 Content data in `packages/shared/src/data/gameContent.ts`:
@@ -150,4 +153,7 @@ Content data in `packages/shared/src/data/gameContent.ts`:
 - 91 either/or questions (7 categories)
 - 150 German words (easy/medium/hard) for Anagramme, Hangman, Gluecksrad
 - 100 Gluecksrad phrases (7 categories)
-- Utility functions: `shuffleArray`, `scrambleWord`, `getRandomWords`, `getRandomQuestions`
+- ~70 word guess words with taboo words
+- ~50 emoji draw words with categories
+- 84 emojis in 6 categories for emoji palette
+- Utility functions: `shuffleArray`, `scrambleWord`, `getRandomWords`, `getRandomQuestions`, `getRandomWordGuessWords`, `getRandomEmojiDrawWords`

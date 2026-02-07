@@ -8,6 +8,7 @@ import type { GameType } from '@playtogether/shared';
 import { MOODY_CONFIG } from '@playtogether/shared';
 import { moodyService } from './MoodyService.js';
 import { monthlyScoreService } from './MonthlyScoreService.js';
+import { achievementService } from './AchievementService.js';
 
 export interface GameResult {
   userId: string;
@@ -119,6 +120,11 @@ export class StatsService {
     // Record monthly scores
     const playerIds = results.map((r) => r.userId);
     await monthlyScoreService.recordGamePlayed(playerIds, winnerId);
+
+    // Check achievements for all participants
+    await Promise.all(
+      playerIds.map((id) => achievementService.checkAchievements(id).catch(console.error))
+    );
   }
 
   /**

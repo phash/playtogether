@@ -10,5 +10,8 @@ export * from './HangmanEngine.js';
 export * from './GluecksradEngine.js';
 export * from './TicTacToeEngine.js';
 export * from './RockPaperScissorsEngine.js';
+export * from './ReactionTestEngine.js';
+export * from './WordGuessEngine.js';
+export * from './EmojiDrawEngine.js';
 export * from './GameManager.js';
 export * from './PlaylistManager.js';

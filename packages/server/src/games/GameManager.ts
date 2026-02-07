@@ -15,6 +15,9 @@ import { HangmanEngine } from './HangmanEngine.js';
 import { GluecksradEngine } from './GluecksradEngine.js';
 import { TicTacToeEngine } from './TicTacToeEngine.js';
 import { RockPaperScissorsEngine } from './RockPaperScissorsEngine.js';
+import { ReactionTestEngine } from './ReactionTestEngine.js';
+import { WordGuessEngine } from './WordGuessEngine.js';
+import { EmojiDrawEngine } from './EmojiDrawEngine.js';
 
 type GameEngineConstructor = new (
   config: GameEngineConfig,
@@ -29,6 +32,9 @@ const GAME_ENGINES: Record<GameType, GameEngineConstructor> = {
   gluecksrad: GluecksradEngine,
   tic_tac_toe: TicTacToeEngine,
   rock_paper_scissors: RockPaperScissorsEngine,
+  reaction_test: ReactionTestEngine,
+  word_guess: WordGuessEngine,
+  emoji_draw: EmojiDrawEngine,
 };
 
 export class GameManager {
